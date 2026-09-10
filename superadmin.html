@@ -591,6 +591,85 @@
             .upd-stats { grid-template-columns: 1fr 1fr; }
         }
 
+        /* ── Filet de sécurité mobile : champs isolés hors .add-form avec une largeur fixe en px ── */
+        @media (max-width: 600px) {
+            input[style*="width:1"], input[style*="width:2"], input[style*="width:3"], input[style*="width:4"], input[style*="width:5"],
+            input[style*="width: 1"], input[style*="width: 2"], input[style*="width: 3"], input[style*="width: 4"], input[style*="width: 5"],
+            select[style*="width:1"], select[style*="width:2"], select[style*="width:3"], select[style*="width:4"],
+            select[style*="min-width:1"], select[style*="min-width:2"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box;
+            }
+            .flux-detail-grid, .upd-form-row, .prio-add-row, .prio-m3u-row { grid-template-columns: 1fr !important; }
+        }
+
+        /* ════════════════════════════════════════════════════════════════
+           APP MOBILE — navigation page par page (menu d'accueil → page → retour)
+           N'affecte jamais le desktop : tout est dans @media (max-width:900px)
+           ════════════════════════════════════════════════════════════════ */
+        #mobile-app-topbar { display: none; }
+        #mobile-home-menu  { display: none; }
+
+        @media (max-width: 900px) {
+            /* Onglets classiques remplacés par le menu d'accueil */
+            .tabs { display: none !important; }
+
+            /* Barre du haut façon app, avec bouton retour */
+            #mobile-app-topbar {
+                position: sticky; top: 0; z-index: 45;
+                display: none; align-items: center; justify-content: space-between;
+                gap: 10px; background: #161616; border: 1px solid #2a2a2a;
+                border-radius: 12px; padding: 9px 10px; margin-bottom: 14px;
+            }
+            body.mobile-page-open #mobile-app-topbar { display: flex; }
+            #mobile-app-back {
+                width: 34px; height: 34px; min-height: 34px; flex-shrink: 0; padding: 0;
+                border-radius: 50%; background: #222; border: 1px solid #333; color: #eee;
+                display: flex; align-items: center; justify-content: center; font-size: 14px;
+            }
+            #mobile-app-title {
+                flex: 1; text-align: center; font-size: 13px; font-weight: 800;
+                color: #fff; text-transform: uppercase; letter-spacing: .5px;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+
+            /* Menu d'accueil : grille de "cartes app" */
+            #mobile-home-menu {
+                display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px;
+            }
+            body.mobile-page-open #mobile-home-menu { display: none; }
+
+            .mobile-app-card {
+                background: #1c1c1c; border: 1px solid #2a2a2a; border-radius: 14px;
+                padding: 14px 6px; min-height: 84px; display: flex; flex-direction: column;
+                align-items: center; justify-content: center; gap: 8px; text-align: center;
+                cursor: pointer; transition: transform .12s ease, background .12s ease;
+            }
+            .mobile-app-card:active { transform: scale(.94); background: #242424; }
+            .mobile-app-card-icon {
+                width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+                background: rgba(229,9,20,.13); color: #e50914;
+                display: flex; align-items: center; justify-content: center; font-size: 16px;
+            }
+            .mobile-app-card-label {
+                font-size: 9.5px; font-weight: 800; color: #ccc; line-height: 1.25;
+                letter-spacing: .2px; word-break: break-word;
+            }
+            .mobile-app-card-badge {
+                position: absolute; margin-top: -34px; margin-left: 26px;
+                background: #e50914; color: #fff; border-radius: 10px; font-size: 9px;
+                font-weight: 800; padding: 1px 5px; line-height: 1.4;
+            }
+
+            /* Tant qu'on est sur le menu d'accueil, on masque la page active */
+            body:not(.mobile-page-open) .section.active { display: none !important; }
+            /* Petite animation d'entrée façon app quand on ouvre une page */
+            body.mobile-page-open .section.active { animation: mobileAppSlideIn .2s ease; }
+            @keyframes mobileAppSlideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+        }
+
         /* ── Confort tactile général sur tout écran ≤ 900px (tablette incluse) ── */
         @media (max-width: 900px) and (pointer: coarse) {
             .action-btn { padding: 8px 12px; font-size: 12px; }
@@ -741,6 +820,14 @@
         <button class="tab-btn" onclick="showTab('xstream-section',event);xsLoadList()" style="border:1px solid rgba(0,175,255,.35);"><i class="fas fa-satellite-dish"></i> XSTREAM</button>
         <button class="tab-btn" onclick="showTab('serverlog-section',event);srvLogStart();qLoadQuarantine()" style="border:1px solid rgba(255,60,60,.35);"><i class="fas fa-terminal"></i> LOG SERVEUR</button>
     </div>
+
+    <!-- ════ APP MOBILE : barre du haut + menu d'accueil façon app (page par page) ════ -->
+    <div id="mobile-app-topbar">
+        <button id="mobile-app-back" onclick="mobileGoHomeApp()" aria-label="Retour au menu"><i class="fas fa-chevron-left"></i></button>
+        <span id="mobile-app-title">Menu</span>
+        <span style="width:34px"></span>
+    </div>
+    <div id="mobile-home-menu"></div>
 
     <!-- ---- UTILISATEURS ---- -->
     <div id="users-section" class="section active">
@@ -7780,6 +7867,107 @@ async function xsRevoke(cle) {
     } catch (e) { toast('❌ ' + e.message, '#ff6b6b'); }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   APP MOBILE — page par page, sans rien changer au code existant.
+   On enrichit showTab() (déjà défini plus haut) sans le remplacer :
+   il continue de fonctionner exactement pareil sur desktop.
+   ════════════════════════════════════════════════════════════════ */
+(function () {
+    var MOBILE_BREAKPOINT = 900;
+    var _originalShowTab = window.showTab;
+
+    window.showTab = function (id, e) {
+        _originalShowTab(id, e);
+        if (window.innerWidth <= MOBILE_BREAKPOINT) {
+            document.body.classList.add('mobile-page-open');
+            var titleEl = document.getElementById('mobile-app-title');
+            var btn = (e && e.currentTarget) || document.querySelector('.tab-btn.active');
+            if (titleEl && btn) {
+                titleEl.textContent = btn.textContent.trim();
+            }
+            var topbar = document.getElementById('mobile-app-topbar');
+            if (topbar) window.scrollTo(0, 0);
+        }
+    };
+
+    // Retour au menu d'accueil (bouton "◀" de la barre du haut)
+    window.mobileGoHomeApp = function () {
+        document.body.classList.remove('mobile-page-open');
+        window.scrollTo(0, 0);
+    };
+
+    // Construction du menu d'accueil à partir des onglets existants
+    // (toujours synchronisé : un onglet ajouté/retiré plus tard apparaît/disparaît automatiquement)
+    function buildMobileHomeMenu() {
+        var grid = document.getElementById('mobile-home-menu');
+        var tabButtons = document.querySelectorAll('.tabs .tab-btn');
+        if (!grid || !tabButtons.length) return;
+        grid.innerHTML = '';
+        tabButtons.forEach(function (btn) {
+            var icon = btn.querySelector('i');
+            var badge = btn.querySelector('span[id$="-badge"]');
+            var label = btn.textContent.trim();
+
+            var card = document.createElement('div');
+            card.className = 'mobile-app-card';
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+
+            var iconWrap = document.createElement('span');
+            iconWrap.className = 'mobile-app-card-icon';
+            if (icon) iconWrap.appendChild(icon.cloneNode(true));
+
+            var labelWrap = document.createElement('span');
+            labelWrap.className = 'mobile-app-card-label';
+            labelWrap.textContent = label;
+
+            card.appendChild(iconWrap);
+            card.appendChild(labelWrap);
+
+            if (badge) {
+                var badgeClone = document.createElement('span');
+                badgeClone.className = 'mobile-app-card-badge';
+                badgeClone.id = badge.id + '-mcard';
+                badgeClone.style.display = badge.style.display === 'none' ? 'none' : 'inline-block';
+                badgeClone.textContent = badge.textContent;
+                card.appendChild(badgeClone);
+            }
+
+            // Ouvre la vraie page en déclenchant le vrai bouton d'onglet
+            // (déclenche aussi tous les chargements associés : loadHistory(), prioLoadData(), etc.)
+            card.addEventListener('click', function () { btn.click(); });
+            card.addEventListener('keypress', function (ev) {
+                if (ev.key === 'Enter' || ev.key === ' ') btn.click();
+            });
+
+            grid.appendChild(card);
+        });
+    }
+
+    // Garde les badges (ex: alertes diagnostic) synchronisés entre l'onglet réel et sa carte
+    function syncMobileBadges() {
+        document.querySelectorAll('.tabs .tab-btn span[id$="-badge"]').forEach(function (badge) {
+            var clone = document.getElementById(badge.id + '-mcard');
+            if (!clone) return;
+            clone.textContent = badge.textContent;
+            clone.style.display = badge.style.display === 'none' ? 'none' : 'inline-block';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        buildMobileHomeMenu();
+        // Au démarrage sur mobile : on part toujours du menu d'accueil, jamais d'une page ouverte
+        document.body.classList.remove('mobile-page-open');
+        setInterval(syncMobileBadges, 4000);
+    });
+
+    // Si le DOM est déjà chargé (script en fin de page), on construit tout de suite
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        buildMobileHomeMenu();
+        document.body.classList.remove('mobile-page-open');
+        setInterval(syncMobileBadges, 4000);
+    }
+})();
 </script>
 </body>
 </html>
