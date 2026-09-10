@@ -2,11 +2,19 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Prime TV (v6 — Optimisé)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="theme-color" content="#121212">
+    <meta name="color-scheme" content="dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="My Box TV Admin">
+    <meta name="format-detection" content="telephone=no">
+    <title>Admin - My Box TV (v6 — Optimisé)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; }
@@ -14,16 +22,16 @@
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; display: flex; align-items: center; justify-content: center; }
         .login-box { background: #1e1e1e; padding: 40px; border-radius: 10px; border: 1px solid #333; text-align: center; }
         input, select { padding: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; margin: 5px 0; }
-        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background .2s; }
+        button { padding: 10px 20px; background: #e50914; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background .2s; }
         button:hover { background: #ff0f1f; }
 
         #dashboard { display: none; padding: 20px; max-width: 1300px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        h1 { color: #4CAF50; margin: 0; display:flex; align-items:center; gap:15px; }
+        h1 { color: #e50914; margin: 0; display:flex; align-items:center; gap:15px; }
 
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { background: #333; padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; color: #eee; font-weight: bold; }
-        .tab-btn.active { background: #4CAF50; color: white; }
+        .tab-btn.active { background: #e50914; color: white; }
         .section { display: none; }
         .section.active { display: block; }
 
@@ -47,7 +55,7 @@
 
         .badge-vie    { background: rgba(0,170,255,.2); color: #0af;    padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight:700; }
         .badge-active { background: rgba(46,204,113,.2); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight:700; }
-        .badge-exp    { background: rgba(76,175,80,.2);   color: #4CAF50; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight:700; }
+        .badge-exp    { background: rgba(229,9,20,.2);   color: #e50914; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight:700; }
 
         /* ── PRÉSENCE EN LIGNE ── */
         .dot-online  { display:inline-block; width:8px; height:8px; background:#2ecc71; border-radius:50%; margin-right:5px; box-shadow:0 0 6px #2ecc71; animation:pulse-green 1.5s ease-in-out infinite; vertical-align:middle; flex-shrink:0; }
@@ -59,39 +67,39 @@
         .presence-dur  { font-size:11px; color:#888; font-family:monospace; }
 
         /* ── ERREURS FLUX ── */
-        @keyframes blink-red { 0%,100%{background:rgba(76,175,80,0.05)} 50%{background:rgba(76,175,80,0.18)} }
-        @keyframes pulse-red  { 0%,100%{box-shadow:0 0 4px rgba(76,175,80,.6)} 50%{box-shadow:0 0 14px rgba(76,175,80,1),0 0 28px rgba(76,175,80,.4)} }
+        @keyframes blink-red { 0%,100%{background:rgba(229,9,20,0.05)} 50%{background:rgba(229,9,20,0.18)} }
+        @keyframes pulse-red  { 0%,100%{box-shadow:0 0 4px rgba(229,9,20,.6)} 50%{box-shadow:0 0 14px rgba(229,9,20,1),0 0 28px rgba(229,9,20,.4)} }
         @keyframes shake-badge{ 0%,100%{transform:scale(1)} 25%{transform:scale(1.18)} 75%{transform:scale(0.92)} }
         .row-error td { animation: blink-red 1.2s ease-in-out infinite; }
-        .dot-error { display:inline-block; width:9px; height:9px; background:#4CAF50; border-radius:50%; margin-right:5px; animation:pulse-red 1s ease-in-out infinite; vertical-align:middle; flex-shrink:0; }
-        .badge-error { display:inline-flex; align-items:center; background:rgba(76,175,80,.15); color:#ff4444; border:1px solid rgba(76,175,80,.5); padding:3px 9px; border-radius:12px; font-size:11px; font-weight:700; white-space:nowrap; cursor:pointer; animation:shake-badge 2s ease infinite; }
-        .badge-error:hover { background:rgba(76,175,80,.28); }
+        .dot-error { display:inline-block; width:9px; height:9px; background:#e50914; border-radius:50%; margin-right:5px; animation:pulse-red 1s ease-in-out infinite; vertical-align:middle; flex-shrink:0; }
+        .badge-error { display:inline-flex; align-items:center; background:rgba(229,9,20,.15); color:#ff4444; border:1px solid rgba(229,9,20,.5); padding:3px 9px; border-radius:12px; font-size:11px; font-weight:700; white-space:nowrap; cursor:pointer; animation:shake-badge 2s ease infinite; }
+        .badge-error:hover { background:rgba(229,9,20,.28); }
         .badge-ok-flux { display:inline-flex; align-items:center; background:rgba(46,204,113,.08); color:#2ecc71; border:1px solid rgba(46,204,113,.2); padding:2px 9px; border-radius:12px; font-size:10px; font-weight:700; white-space:nowrap; }
 
         /* ── MODAL DÉTAIL FLUX ── */
         #flux-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); z-index:9990; align-items:center; justify-content:center; }
         #flux-modal-overlay.show { display:flex; }
-        #flux-modal-box { background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:28px 32px; max-width:520px; width:92%; position:relative; box-shadow:0 0 60px rgba(76,175,80,.2); }
+        #flux-modal-box { background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:28px 32px; max-width:520px; width:92%; position:relative; box-shadow:0 0 60px rgba(229,9,20,.2); }
         #flux-modal-box h3 { font-size:15px; font-weight:800; color:#fff; margin:0 0 20px; display:flex; align-items:center; gap:10px; }
         .flux-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px; }
         .flux-detail-item { background:#1a1a1a; border:1px solid #222; border-radius:10px; padding:12px 14px; }
         .flux-detail-lbl { font-size:10px; color:#555; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
         .flux-detail-val { font-size:14px; font-weight:700; color:#ddd; font-family:monospace; word-break:break-all; }
-        .flux-detail-val.red   { color:#4CAF50; }
+        .flux-detail-val.red   { color:#e50914; }
         .flux-detail-val.green { color:#2ecc71; }
         .flux-detail-val.gold  { color:#ffd700; }
         .flux-error-log { background:#0d0d0d; border:1px solid #1e1e1e; border-radius:10px; padding:12px 14px; margin-bottom:22px; max-height:120px; overflow-y:auto; }
-        .flux-error-log p { font-size:11px; color:#4CAF50; margin:0 0 4px; font-family:monospace; }
+        .flux-error-log p { font-size:11px; color:#e50914; margin:0 0 4px; font-family:monospace; }
         .flux-btn-row { display:flex; gap:10px; flex-wrap:wrap; }
         .flux-btn { flex:1; padding:11px 16px; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:.5px; transition:all .2s; }
-        .flux-btn-cache { background:linear-gradient(135deg,#ff6b00,#4CAF50); color:#fff; box-shadow:0 4px 16px rgba(76,175,80,.3); }
+        .flux-btn-cache { background:linear-gradient(135deg,#ff6b00,#e50914); color:#fff; box-shadow:0 4px 16px rgba(229,9,20,.3); }
         .flux-btn-repair{ background:linear-gradient(135deg,#2ecc71,#1a9e57); color:#fff; box-shadow:0 4px 16px rgba(46,204,113,.3); }
         .flux-btn-close { background:#1e1e1e; color:#888; border:1px solid #2e2e2e; }
         .flux-btn:hover { filter:brightness(1.15); transform:translateY(-1px); }
 
         #stats-bar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
         .stat-card { background: #1e1e1e; border: 1px solid #2e2e2e; border-radius: 10px; padding: 16px 22px; flex: 1; min-width: 130px; }
-        .stat-val  { font-size: 28px; font-weight: 900; color: #4CAF50; }
+        .stat-val  { font-size: 28px; font-weight: 900; color: #e50914; }
         .stat-lbl  { font-size: 11px; color: #666; margin-top: 2px; }
 
         /* chaines tab */
@@ -108,12 +116,14 @@
         #btn-clear-cache.clearing { opacity:.6; cursor:not-allowed; pointer-events:none; }
         .cache-stat-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
         .cache-stat-card { flex:1; min-width:120px; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:8px; padding:12px 16px; text-align:center; }
-        .cache-stat-val { font-size:22px; font-weight:900; color:#4CAF50; }
+        .cache-stat-val { font-size:22px; font-weight:900; color:#e50914; }
         .cache-stat-lbl { font-size:10px; color:#555; margin-top:2px; letter-spacing:1px; }
 
         @media(max-width:600px){
             .add-form input[style*="width:400px"] { width: 100% !important; }
-            th:nth-child(3), td:nth-child(3) { display:none; }
+            /* Anciennement : masquage de la 3e colonne de TOUS les tableaux.
+               Remplacé par le défilement horizontal dédié (.table-scroll) plus bas,
+               qui garde toutes les colonnes visibles et accessibles. */
         }
 
         /* TARIFS */
@@ -125,7 +135,7 @@
             border-radius: 12px; padding: 20px; margin-bottom: 18px;
         }
         #update-section .upd-card-title {
-            font-size: 11px; letter-spacing: 2px; color: #4CAF50;
+            font-size: 11px; letter-spacing: 2px; color: #e50914;
             font-weight: 700; margin-bottom: 14px;
             display: flex; align-items: center; gap: 8px;
         }
@@ -155,14 +165,14 @@
             font-size:13px; display:none; text-align:center;
         }
         #publish-msg-upd.success { background:rgba(46,204,113,.1); border:1px solid rgba(46,204,113,.3); color:#2ecc71; }
-        #publish-msg-upd.error   { background:rgba(76,175,80,.1);  border:1px solid rgba(76,175,80,.3);  color:#4CAF50; }
+        #publish-msg-upd.error   { background:rgba(229,9,20,.1);  border:1px solid rgba(229,9,20,.3);  color:#e50914; }
         #publish-msg-upd.info    { background:rgba(0,170,255,.1);  border:1px solid rgba(0,170,255,.3);  color:#0af; }
         .upd-history-row {
             display:flex; align-items:center; justify-content:space-between;
             padding:10px 14px; background:#252525; border-radius:8px; margin-bottom:6px; font-size:13px;
         }
         .upd-v-badge {
-            background:rgba(76,175,80,.2); color:#4CAF50; border:1px solid rgba(76,175,80,.3);
+            background:rgba(229,9,20,.2); color:#e50914; border:1px solid rgba(229,9,20,.3);
             border-radius:20px; font-size:10px; font-weight:700; padding:2px 10px; font-family:monospace;
         }
         .upd-v-note { color:#888; font-size:11px; flex:1; margin:0 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -171,7 +181,7 @@
         #code-info-upd { display:flex; justify-content:space-between; font-size:11px; color:#555; margin-top:6px; }
         .upd-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
         .upd-stat  { background:#252525; border:1px solid #2a2a2a; border-radius:8px; padding:12px; text-align:center; }
-        .upd-stat-val { font-size:22px; font-weight:900; color:#4CAF50; font-family:monospace; }
+        .upd-stat-val { font-size:22px; font-weight:900; color:#e50914; font-family:monospace; }
         .upd-stat-lbl { font-size:10px; color:#666; margin-top:3px; letter-spacing:1px; }
         .tarif-card { background:#1e1e1e; border:1px solid #2a2a2a; border-radius:10px; padding:18px; position:relative; overflow:hidden; transition:border-color .2s; }
         .tarif-card:hover { border-color:#444; }
@@ -187,14 +197,14 @@
         /* ── PRIORITÉ CHAÎNES ── */
         #priorite-section .stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
         #priorite-section .prio-stat-card { background: #141414; border: 1px solid #1e1e1e; border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 110px; }
-        #priorite-section .prio-stat-val { font-size: 24px; font-weight: 900; color: #4CAF50; }
+        #priorite-section .prio-stat-val { font-size: 24px; font-weight: 900; color: #e50914; }
         #priorite-section .prio-stat-lbl { font-size: 10px; color: #555; margin-top: 3px; letter-spacing: 1px; }
         #priorite-section .prio-toolbar { background: #141414; border: 1px solid #1e1e1e; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         #priorite-section .prio-toolbar input[type=text] { flex: 1; min-width: 160px; padding: 8px 12px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 7px; color: #fff; font-size: 13px; }
-        #priorite-section .prio-toolbar input:focus { outline: none; border-color: #4CAF50; }
+        #priorite-section .prio-toolbar input:focus { outline: none; border-color: #e50914; }
         #priorite-section .prio-toolbar select { padding: 8px 10px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 7px; color: #fff; font-size: 13px; cursor: pointer; }
         .prio-btn { padding: 9px 16px; border-radius: 7px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; transition: all .15s; white-space: nowrap; }
-        .prio-btn-red   { background: #4CAF50; color: #fff; }
+        .prio-btn-red   { background: #e50914; color: #fff; }
         .prio-btn-red:hover { background: #ff1a24; }
         .prio-btn-green { background: linear-gradient(135deg,#2ecc71,#1a8a4a); color: #fff; box-shadow: 0 3px 12px rgba(46,204,113,.3); }
         .prio-btn-green:hover { filter: brightness(1.1); }
@@ -212,10 +222,10 @@
         .prio-col-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
         .prio-ch-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; margin-bottom: 2px; background: #0d0d0d; border: 1px solid transparent; user-select: none; transition: background .1s; }
         .prio-ch-item:hover { background: #161616; border-color: #222; }
-        .prio-ch-item.drag-over { border-color: #4CAF50 !important; background: rgba(76,175,80,.07) !important; }
+        .prio-ch-item.drag-over { border-color: #e50914 !important; background: rgba(229,9,20,.07) !important; }
         .prio-ch-item.dragging { opacity: .3; }
         .prio-ch-item.is-priority { border-left: 2px solid #ffd700; }
-        .prio-ch-item.top3 { border-left: 2px solid #4CAF50; }
+        .prio-ch-item.top3 { border-left: 2px solid #e50914; }
         .prio-ch-drag { color: #252525; font-size: 11px; cursor: grab; flex-shrink: 0; padding: 2px; }
         .prio-ch-drag:hover { color: #555; }
         .prio-ch-rank { font-size: 10px; color: #333; font-weight: 700; width: 22px; text-align: right; flex-shrink: 0; font-family: monospace; }
@@ -224,7 +234,7 @@
         .prio-ch-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .prio-ch-cat  { font-size: 10px; color: #444; flex-shrink: 0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .prio-ch-btn { width: 24px; height: 24px; border-radius: 4px; border: none; background: transparent; color: #333; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .12s; }
-        .prio-ch-btn:hover { background: rgba(76,175,80,.2); color: #4CAF50; }
+        .prio-ch-btn:hover { background: rgba(229,9,20,.2); color: #e50914; }
         .prio-ch-btn.add:hover { background: rgba(46,204,113,.2); color: #2ecc71; }
         .prio-ch-btn:disabled { opacity: .2; cursor: default; background: transparent !important; }
         .prio-drop-hint { text-align: center; padding: 50px 20px; color: #252525; pointer-events: none; }
@@ -234,25 +244,25 @@
         .prio-loading i { font-size: 22px; animation: spin .7s linear infinite; margin-bottom: 10px; display: block; }
 
         /* ── SELECTION / CHECKBOXES ── */
-        .prio-ch-item .prio-ch-check { width: 15px; height: 15px; accent-color: #4CAF50; cursor: pointer; flex-shrink: 0; margin-right: 2px; }
-        .prio-ch-item.selected { background: rgba(76,175,80,.08) !important; border-color: rgba(76,175,80,.3) !important; }
-        .prio-sel-bar { display: none; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(76,175,80,.07); border-top: 1px solid rgba(76,175,80,.15); flex-shrink: 0; flex-wrap: wrap; }
+        .prio-ch-item .prio-ch-check { width: 15px; height: 15px; accent-color: #e50914; cursor: pointer; flex-shrink: 0; margin-right: 2px; }
+        .prio-ch-item.selected { background: rgba(229,9,20,.08) !important; border-color: rgba(229,9,20,.3) !important; }
+        .prio-sel-bar { display: none; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(229,9,20,.07); border-top: 1px solid rgba(229,9,20,.15); flex-shrink: 0; flex-wrap: wrap; }
         .prio-sel-bar.show { display: flex; }
-        .prio-sel-bar span { font-size: 11px; color: #4CAF50; font-weight: 700; flex: 1; }
+        .prio-sel-bar span { font-size: 11px; color: #e50914; font-weight: 700; flex: 1; }
         .prio-sel-btn { padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; transition: all .12s; }
         .prio-sel-btn-green { background: rgba(46,204,113,.15); color: #2ecc71; border: 1px solid rgba(46,204,113,.3); }
         .prio-sel-btn-green:hover { background: rgba(46,204,113,.25); }
-        .prio-sel-btn-red   { background: rgba(76,175,80,.15);  color: #4CAF50; border: 1px solid rgba(76,175,80,.3); }
-        .prio-sel-btn-red:hover   { background: rgba(76,175,80,.25); }
+        .prio-sel-btn-red   { background: rgba(229,9,20,.15);  color: #e50914; border: 1px solid rgba(229,9,20,.3); }
+        .prio-sel-btn-red:hover   { background: rgba(229,9,20,.25); }
         .prio-sel-btn-gray  { background: rgba(255,255,255,.05); color: #aaa; border: 1px solid #2a2a2a; }
         .prio-sel-btn-gray:hover  { background: rgba(255,255,255,.1); color: #fff; }
-        .prio-col-check-all { width: 14px; height: 14px; accent-color: #4CAF50; cursor: pointer; flex-shrink: 0; }
+        .prio-col-check-all { width: 14px; height: 14px; accent-color: #e50914; cursor: pointer; flex-shrink: 0; }
         #prio-ctx-menu { position: fixed; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 8px; z-index: 9900; padding: 4px 0; min-width: 190px; box-shadow: 0 8px 28px rgba(0,0,0,.7); display: none; }
         #prio-ctx-menu.open { display: block; }
         .prio-ctx-item { padding: 9px 16px; font-size: 12px; color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background .1s; }
         .prio-ctx-item:hover { background: #252525; color: #fff; }
         .prio-ctx-item i { width: 14px; text-align: center; color: #555; }
-        .prio-ctx-item:hover i { color: #4CAF50; }
+        .prio-ctx-item:hover i { color: #e50914; }
         .prio-ctx-item.ctx-green:hover i { color: #2ecc71; }
         .prio-ctx-item.ctx-disabled { opacity: .35; pointer-events: none; }
         .prio-ctx-sep { height: 1px; background: #2a2a2a; margin: 3px 0; }
@@ -262,7 +272,7 @@
         .prio-col-search-wrap input:focus { outline: none; border-color: #ffd700; }
 
         /* ── SÉLECTION PAR PLAGE (Shift+clic) ── */
-        .prio-ch-item.range-preview { background: rgba(76,175,80,.05) !important; border-color: rgba(76,175,80,.2) !important; }
+        .prio-ch-item.range-preview { background: rgba(229,9,20,.05) !important; border-color: rgba(229,9,20,.2) !important; }
 
         /* ── SUPPRESSION / QUARANTAINE BOUTONS ── */
         .prio-sel-btn-orange { background: rgba(255,120,0,.15); color: #ff7800; border: 1px solid rgba(255,120,0,.35); }
@@ -307,17 +317,17 @@
         }
         #prio-delete-modal-overlay.open { display: flex; }
         #prio-delete-modal {
-            background: #1a0a0a; border: 1px solid rgba(76,175,80,.4);
+            background: #1a0a0a; border: 1px solid rgba(229,9,20,.4);
             border-radius: 12px; padding: 28px 32px; max-width: 420px; width: 90%;
             text-align: center;
         }
-        #prio-delete-modal h3 { color: #4CAF50; margin: 0 0 10px; font-size: 16px; }
+        #prio-delete-modal h3 { color: #e50914; margin: 0 0 10px; font-size: 16px; }
         #prio-delete-modal p  { color: #aaa; font-size: 13px; margin: 0 0 20px; line-height: 1.6; }
-        #prio-delete-modal .modal-count { font-size: 36px; font-weight: 900; color: #4CAF50; display: block; margin: 8px 0; }
+        #prio-delete-modal .modal-count { font-size: 36px; font-weight: 900; color: #e50914; display: block; margin: 8px 0; }
         .modal-btn-row { display: flex; gap: 10px; justify-content: center; }
         .modal-btn-cancel { background: #333; color: #aaa; border: none; border-radius: 7px; padding: 10px 24px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .modal-btn-cancel:hover { background: #444; color: #fff; }
-        .modal-btn-confirm { background: #4CAF50; color: #fff; border: none; border-radius: 7px; padding: 10px 24px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-btn-confirm { background: #e50914; color: #fff; border: none; border-radius: 7px; padding: 10px 24px; font-size: 13px; font-weight: 700; cursor: pointer; }
         .modal-btn-confirm:hover { background: #ff1a24; }
         /* ── UNDO/REDO TOOLBAR ── */
         .prio-undo-btn { background: #1a1a1a; border: 1px solid #2a2a2a; color: #555; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: all .15s; }
@@ -333,9 +343,9 @@
         /* ── LECTEUR FLOTTANT PERMANENT ── */
         #prio-mini-player {
             position: fixed; bottom: 20px; right: 20px; width: 310px;
-            background: #0d0d0d; border: 1px solid rgba(76,175,80,.35);
+            background: #0d0d0d; border: 1px solid rgba(229,9,20,.35);
             border-radius: 12px; z-index: 8000; overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,.85), 0 0 0 1px rgba(76,175,80,.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,.85), 0 0 0 1px rgba(229,9,20,.15);
             display: none; /* caché jusqu'au 1er clic ▶ */
             transition: box-shadow .2s;
         }
@@ -346,17 +356,17 @@
         #prio-mini-player-title { font-size: 12px; font-weight: 700; color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #prio-mini-player-status { font-size: 10px; color: #555; white-space: nowrap; }
         #prio-mini-player-status.live { color: #2ecc71; }
-        #prio-mini-player-status.err  { color: #4CAF50; }
+        #prio-mini-player-status.err  { color: #e50914; }
         #prio-player-wrap { position: relative; background: #000; }
         #prio-player-wrap video { width: 100%; height: 160px; display: block; object-fit: contain; background: #000; }
         #prio-player-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.78); flex-direction: column; gap: 6px; }
         #prio-player-overlay.hidden { display: none; }
         .prio-player-controls { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
-        #prio-vol-range { flex: 1; accent-color: #4CAF50; height: 3px; cursor: pointer; }
+        #prio-vol-range { flex: 1; accent-color: #e50914; height: 3px; cursor: pointer; }
         #prio-btn-stop { background: none; border: none; color: #555; cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 5px; transition: color .15s; }
-        #prio-btn-stop:hover { color: #4CAF50; }
+        #prio-btn-stop:hover { color: #e50914; }
         #prio-btn-close-pip { background: none; border: none; color: #333; cursor: pointer; font-size: 13px; padding: 4px 6px; transition: color .15s; }
-        #prio-btn-close-pip:hover { color: #4CAF50; }
+        #prio-btn-close-pip:hover { color: #e50914; }
         #prio-btn-mute { background: none; border: none; color: #555; cursor: pointer; font-size: 12px; padding: 4px 5px; }
         #prio-btn-mute:hover { color: #fff; }
         #prio-add-panel { background: #0d0d0d; border: 1px solid #1e1e1e; border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
@@ -384,6 +394,12 @@
         #prio-m3u-panel-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #0af; }
         #prio-m3u-panel-body { padding: 12px 14px; border-top: 1px solid #1a2a1e; display: none; }
         #prio-m3u-panel-body.open { display: block; }
+        #prio-cleanup-panel { background: #0d0d0d; border: 1px solid #2a1414; border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+        #prio-cleanup-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+        #prio-cleanup-panel-header:hover { background: rgba(229,9,20,.03); }
+        #prio-cleanup-panel-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #e50914; }
+        #prio-cleanup-panel-body { padding: 12px 14px; border-top: 1px solid #2a1414; display: none; }
+        #prio-cleanup-panel-body.open { display: block; }
         .prio-m3u-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; align-items: center; }
         @media(max-width:600px){ .prio-m3u-row { grid-template-columns: 1fr; } }
         .prio-m3u-row input { padding: 8px 10px; background: #141414; border: 1px solid #2a2a2a; border-radius: 6px; color: #fff; font-size: 12px; width: 100%; box-sizing: border-box; }
@@ -405,7 +421,7 @@
         .parr-sub.active { display:block; }
         .badge-r-attente { background:rgba(243,156,18,.15); color:#f39c12; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
         .badge-r-approuve{ background:rgba(46,204,113,.15);  color:#2ecc71; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
-        .badge-r-rejete  { background:rgba(76,175,80,.15);    color:#4CAF50; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
+        .badge-r-rejete  { background:rgba(229,9,20,.15);    color:#e50914; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; }
         .parr-kk-card { background:#0a0a0a; border:1px solid #1e1e1e; border-radius:10px; padding:20px; margin-bottom:16px; }
         .parr-kk-title{ font-size:11px; letter-spacing:2px; font-weight:700; color:#f39c12; margin-bottom:14px; }
         .parr-kk-row  { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; margin-bottom:10px; }
@@ -414,8 +430,8 @@
         .parr-kk-row input:focus { outline:none; border-color:rgba(243,156,18,.4); }
         .btn-parr-approve { padding:5px 11px; background:rgba(46,204,113,.2); color:#2ecc71; border:1px solid rgba(46,204,113,.3); border-radius:5px; cursor:pointer; font-size:11px; font-weight:700; }
         .btn-parr-approve:hover { background:rgba(46,204,113,.35); }
-        .btn-parr-reject  { padding:5px 11px; background:rgba(76,175,80,.15); color:#4CAF50; border:1px solid rgba(76,175,80,.3); border-radius:5px; cursor:pointer; font-size:11px; font-weight:700; }
-        .btn-parr-reject:hover  { background:rgba(76,175,80,.3); }
+        .btn-parr-reject  { padding:5px 11px; background:rgba(229,9,20,.15); color:#e50914; border:1px solid rgba(229,9,20,.3); border-radius:5px; cursor:pointer; font-size:11px; font-weight:700; }
+        .btn-parr-reject:hover  { background:rgba(229,9,20,.3); }
         /* ── REVENDEURS ── */
         .rs-card { background:#141414; border:1px solid #1e1e1e; border-radius:12px; padding:18px; transition:border-color .2s; position:relative; overflow:hidden; }
         .rs-card:hover { border-color:#2a2a2a; }
@@ -430,10 +446,156 @@
         .rs-card-lbl { color:#555; }
         .rs-card-val { color:#ccc; font-weight:600; }
         .rs-badge-actif { background:rgba(46,204,113,.15); color:#2ecc71; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; }
-        .rs-badge-inactif { background:rgba(76,175,80,.15); color:#4CAF50; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; }
+        .rs-badge-inactif { background:rgba(229,9,20,.15); color:#e50914; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; }
         .rs-badge-pay { background:rgba(243,156,18,.15); color:#f39c12; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; }
         .rs-card-actions { display:flex; gap:6px; margin-top:12px; }
         #rs-modal-overlay.open { display:flex !important; }
+
+        /* ══════════════════════════════════════════════════════════════════
+           RESPONSIVE / MOBILE-APP LAYER
+           Ajouts non-destructifs : tout ce qui précède reste inchangé,
+           ces règles ne font qu'adapter l'affichage selon la taille d'écran.
+           ══════════════════════════════════════════════════════════════════ */
+
+        /* ── Base : évite tout débordement horizontal, cible tactile correcte ── */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        body { -webkit-tap-highlight-color: transparent; }
+        img { max-width: 100%; }
+        button, .tab-btn, .action-btn, .flux-btn, select, input[type="checkbox"], input[type="radio"] { touch-action: manipulation; }
+
+        /* Barre d'onglets : défilement horizontal façon "app" dès la tablette */
+        @media (max-width: 960px) {
+            .tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x proximity;
+                scrollbar-width: none;
+                position: sticky; top: 0; z-index: 40;
+                background: #121212;
+                padding: 8px 2px 10px;
+                margin: 0 -2px 20px;
+            }
+            .tabs::-webkit-scrollbar { display: none; }
+            .tab-btn { scroll-snap-align: start; white-space: nowrap; flex-shrink: 0; }
+        }
+
+        /* ── Tablette / petit desktop ── */
+        @media (max-width: 900px) {
+            #dashboard { padding: 14px; max-width: 100%; }
+            #stats-bar { gap: 10px; }
+            .stat-card { min-width: calc(50% - 10px); padding: 12px 16px; }
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 600px) {
+            #dashboard { padding: 10px 10px calc(24px + env(safe-area-inset-bottom)); }
+
+            /* En-tête : empile logo/titre puis actions, boutons pleine largeur */
+            .header { flex-direction: column; align-items: stretch; gap: 12px; padding-bottom: 14px; margin-bottom: 16px; }
+            .header h1 { font-size: 17px; flex-wrap: wrap; gap: 8px !important; }
+            .header h1 img { width: 40px !important; }
+            .header > div { width: 100%; justify-content: stretch; }
+            .header > div button, .header > div #cache-status-badge { flex: 1 1 auto; min-height: 42px; justify-content: center; display: inline-flex; align-items: center; }
+
+            h1 { font-size: 17px; }
+            h2 { font-size: 16px; }
+            h3 { font-size: 14px; }
+
+            /* Onglets compacts, toujours lisibles */
+            .tab-btn { font-size: 11px; padding: 10px 13px; min-height: 40px; }
+
+            /* Cartes de stats : grille 2 colonnes régulière */
+            #stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { min-width: 0; padding: 10px 12px; }
+            .stat-val { font-size: 21px; }
+
+            /* Boutons : cible tactile confortable partout */
+            button, .action-btn, .prio-btn, .flux-btn, .tf-toggle-btn { min-height: 38px; }
+            .add-form button { width: 100%; }
+
+            /* Formulaires : un champ par ligne, pleine largeur */
+            .add-form { flex-direction: column; align-items: stretch; padding: 14px; gap: 8px; }
+            .add-form input, .add-form select,
+            .add-form input[style*="width"], select[style*="width"] { width: 100% !important; }
+
+            /* Empêche le zoom automatique iOS sur les champs (min 16px) */
+            input, select, textarea { font-size: 16px !important; }
+
+            /* Tableaux : défilement horizontal dédié, jamais de tableau écrasé */
+            table { min-width: 640px; font-size: 12px; }
+            th, td { padding: 10px 10px; }
+
+            /* Grilles 2 colonnes / 4 colonnes inline → 1 colonne (formulaires de modales) */
+            [style*="grid-template-columns:1fr 1fr"],
+            [style*="grid-template-columns: 1fr 1fr"],
+            [style*="grid-template-columns:2fr 1fr"],
+            [style*="grid-template-columns: 2fr 1fr"] { grid-template-columns: 1fr !important; }
+            [style*="grid-template-columns:repeat(4,1fr)"],
+            [style*="grid-template-columns: repeat(4,1fr)"] { grid-template-columns: repeat(2,1fr) !important; }
+            .flux-detail-grid { grid-template-columns: 1fr; }
+            .upd-stats { grid-template-columns: repeat(3,1fr); gap: 6px; }
+            .upd-stat-val { font-size: 17px; }
+
+            /* Connexion */
+            .login-box { width: 88vw; padding: 30px 22px; box-sizing: border-box; }
+            .login-box input { width: 100% !important; max-width: none; }
+
+            /* Modales : plein écran, façon app native, toujours scrollables */
+            [id$="modal-overlay"] { padding: 0; }
+            [id$="modal-overlay"] > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100%;
+                max-height: 100dvh !important;
+                border-radius: 0 !important;
+                margin: 0;
+                padding: 18px 16px calc(18px + env(safe-area-inset-bottom)) !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .flux-btn-row { flex-direction: column; }
+            .modal-btn-row { flex-direction: column-reverse; }
+            .modal-btn-row button { width: 100%; }
+
+            /* Priorité chaînes : colonnes drag&drop en hauteur adaptée au viewport */
+            .prio-col-box { height: 62vh; min-height: 340px; }
+            #priorite-section .prio-toolbar { flex-direction: column; align-items: stretch; }
+            #priorite-section .prio-toolbar input[type=text] { width: 100%; }
+            .prio-btn { width: 100%; justify-content: center; }
+            .prio-sel-bar { flex-direction: column; align-items: stretch; }
+            .prio-sel-btn { width: 100%; justify-content: center; }
+
+            /* Lecteur flottant : bandeau plein écran en bas façon app mobile */
+            #prio-mini-player {
+                left: 0; right: 0; bottom: 0; width: 100%;
+                border-radius: 14px 14px 0 0;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            #prio-player-wrap video { height: 200px; }
+
+            /* Grilles de cartes (tarifs / revendeurs) : une colonne */
+            #tarifs-grid, #rs-grid { grid-template-columns: 1fr !important; }
+
+            /* Sous-onglets parrainage : défilement horizontal */
+            .parr-subtabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .parr-stab { flex-shrink: 0; white-space: nowrap; }
+        }
+
+        /* ── Très petits écrans ── */
+        @media (max-width: 380px) {
+            .stat-val { font-size: 18px; }
+            .tab-btn { font-size: 10px; padding: 9px 11px; }
+            .upd-stats { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ── Confort tactile général sur tout écran ≤ 900px (tablette incluse) ── */
+        @media (max-width: 900px) and (pointer: coarse) {
+            .action-btn { padding: 8px 12px; font-size: 12px; }
+            th, td { padding: 12px 12px; }
+        }
 
     </style>
 </head>
@@ -443,7 +605,7 @@
 <div id="login-overlay">
     <div class="login-box">
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/COMPANY%281%29.png" width="100" style="margin-bottom:20px; border-radius:10px;">
-        <h2 style="color:#4CAF50; margin-top:0;">ADMIN ACCESS</h2>
+        <h2 style="color:#e50914; margin-top:0;">ADMIN ACCESS</h2>
         <br>
         <input type="password" id="admin-pass" placeholder="Mot de passe" style="width:220px; display:block; margin:0 auto 12px;">
         <button id="btn-login" style="width:100%; max-width:242px; padding:13px;">ENTRER</button>
@@ -456,7 +618,7 @@
     <div class="header">
         <h1>
             <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/COMPANY%281%29.png" width="55" style="border-radius:8px;">
-            PRIME TV <span style="font-size:14px; color:#aaa;">MANAGER</span>
+            MY BOX TV <span style="font-size:14px; color:#aaa;">MANAGER</span>
         </h1>
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button id="maint-btn" onclick="toggleMaintenance()" style="background:#444; font-size:12px;">
@@ -469,7 +631,7 @@
             <button onclick="loadData()" style="background:#444; font-size:12px;">
                 <i class="fas fa-sync-alt"></i> ACTUALISER
             </button>
-            <button id="btn-clear-cache" onclick="clearAllClientCaches()" style="background:linear-gradient(135deg,#ff6b00,#4CAF50); font-size:12px; box-shadow:0 0 14px rgba(76,175,80,0.4); position:relative; overflow:hidden;">
+            <button id="btn-clear-cache" onclick="clearAllClientCaches()" style="background:linear-gradient(135deg,#ff6b00,#e50914); font-size:12px; box-shadow:0 0 14px rgba(229,9,20,0.4); position:relative; overflow:hidden;">
                 <i class="fas fa-trash-alt"></i> VIDER LES CACHES
                 <span id="cache-pulse" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.15); animation:cachePulse 0.6s ease-out;"></span>
             </button>
@@ -481,20 +643,20 @@
 
     <!-- ===== CACHE CLEAR MODAL ===== -->
     <div id="cache-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:600; align-items:center; justify-content:center;">
-        <div style="background:#111; border:1px solid #4CAF50; border-radius:16px; padding:32px 36px; max-width:480px; width:95vw; text-align:center; box-shadow:0 0 60px rgba(76,175,80,0.3);">
-            <div style="width:64px;height:64px;border-radius:50%;background:rgba(76,175,80,0.15);border:2px solid rgba(76,175,80,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
-                <i class="fas fa-trash-alt" style="font-size:26px;color:#4CAF50;"></i>
+        <div style="background:#111; border:1px solid #e50914; border-radius:16px; padding:32px 36px; max-width:480px; width:95vw; text-align:center; box-shadow:0 0 60px rgba(229,9,20,0.3);">
+            <div style="width:64px;height:64px;border-radius:50%;background:rgba(229,9,20,0.15);border:2px solid rgba(229,9,20,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                <i class="fas fa-trash-alt" style="font-size:26px;color:#e50914;"></i>
             </div>
             <h2 style="color:#fff;margin:0 0 10px;font-size:20px;">Vider tous les caches clients</h2>
             <p style="color:#888;font-size:13px;line-height:1.7;margin:0 0 24px;">
                 Tous les téléviseurs et appareils connectés <strong style="color:#ccc;">rechargeront les chaînes</strong> au prochain démarrage.<br>
-                Cette action est <strong style="color:#4CAF50;">irréversible</strong>.
+                Cette action est <strong style="color:#e50914;">irréversible</strong>.
             </p>
             <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:14px;margin-bottom:24px;">
                 <div style="font-size:11px;color:#555;margin-bottom:8px;letter-spacing:1px;">EFFET IMMÉDIAT SUR :</div>
                 <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
                     <div style="text-align:center;">
-                        <div style="font-size:22px;font-weight:900;color:#4CAF50;" id="modal-nb-clients">—</div>
+                        <div style="font-size:22px;font-weight:900;color:#e50914;" id="modal-nb-clients">—</div>
                         <div style="font-size:10px;color:#555;">Abonnés actifs</div>
                     </div>
                     <div style="text-align:center;">
@@ -505,7 +667,7 @@
             </div>
             <div style="display:flex;gap:10px;justify-content:center;">
                 <button onclick="closeCacheModal()" style="background:#222;border:1px solid #333;padding:11px 28px;font-size:13px;border-radius:8px;">Annuler</button>
-                <button id="btn-confirm-cache" onclick="confirmClearCaches()" style="background:linear-gradient(135deg,#4CAF50,#990000);padding:11px 28px;font-size:13px;border-radius:8px;box-shadow:0 4px 16px rgba(76,175,80,0.4);">
+                <button id="btn-confirm-cache" onclick="confirmClearCaches()" style="background:linear-gradient(135deg,#e50914,#990000);padding:11px 28px;font-size:13px;border-radius:8px;box-shadow:0 4px 16px rgba(229,9,20,0.4);">
                     <i class="fas fa-trash-alt"></i> CONFIRMER — VIDER MAINTENANT
                 </button>
             </div>
@@ -518,7 +680,7 @@
         <div class="stat-card"><div class="stat-val" id="st-active">—</div><div class="stat-lbl">Actifs</div></div>
         <div class="stat-card"><div class="stat-val" id="st-vie">—</div><div class="stat-lbl">À vie</div></div>
         <div class="stat-card" style="border-color:rgba(46,204,113,.25);"><div class="stat-val" id="st-online" style="color:#2ecc71;">—</div><div class="stat-lbl" style="display:flex;align-items:center;gap:5px;"><span class="dot-online" style="margin:0;"></span>En ligne</div></div>
-        <div class="stat-card" id="st-alertes-card" style="border-color:rgba(76,175,80,.25);cursor:pointer;" onclick="document.getElementById('users-section').click&&showTab('users-section',{currentTarget:document.querySelector('.tab-btn')})"><div class="stat-val" id="st-alertes" style="color:#4CAF50;">0</div><div class="stat-lbl" style="display:flex;align-items:center;gap:5px;"><span class="dot-error" style="margin:0;animation:none;width:7px;height:7px;"></span>Pannes flux</div></div>
+        <div class="stat-card" id="st-alertes-card" style="border-color:rgba(229,9,20,.25);cursor:pointer;" onclick="document.getElementById('users-section').click&&showTab('users-section',{currentTarget:document.querySelector('.tab-btn')})"><div class="stat-val" id="st-alertes" style="color:#e50914;">0</div><div class="stat-lbl" style="display:flex;align-items:center;gap:5px;"><span class="dot-error" style="margin:0;animation:none;width:7px;height:7px;"></span>Pannes flux</div></div>
         <div class="stat-card"><div class="stat-val" id="st-sources">—</div><div class="stat-lbl">Sources M3U</div></div>
         <div class="stat-card"><div class="stat-val" id="st-chaines">—</div><div class="stat-lbl">Chaînes directes</div></div>
 
@@ -574,8 +736,10 @@
         <button class="tab-btn" onclick="showTab('resellers-section',event);loadResellers()" style="border:1px solid rgba(0,191,255,.35);"><i class="fas fa-store"></i> REVENDEURS</button>
         <button class="tab-btn" onclick="showTab('paiement-config-section',event);loadPaymentConfig()" style="border:1px solid rgba(46,204,113,.35);"><i class="fas fa-credit-card"></i> PAIEMENT</button>
         <button class="tab-btn" onclick="showTab('openrouter-section',event);loadOpenRouterKeys();loadOpenRouterFreeModels()" style="border:1px solid rgba(155,89,255,.35);"><i class="fas fa-robot"></i> IA · OPENROUTER</button>
-        <button class="tab-btn" id="diag-tab-btn" onclick="showTab('diagnostic-section',event);loadDiagnostics();loadDeviceStatuses()" style="border:1px solid rgba(255,140,0,.4);"><i class="fas fa-stethoscope"></i> DIAGNOSTIC <span id="diag-badge" style="display:none;background:#4CAF50;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;">0</span></button>
+        <button class="tab-btn" id="diag-tab-btn" onclick="showTab('diagnostic-section',event);loadDiagnostics();loadDeviceStatuses()" style="border:1px solid rgba(255,140,0,.4);"><i class="fas fa-stethoscope"></i> DIAGNOSTIC <span id="diag-badge" style="display:none;background:#e50914;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;">0</span></button>
         <button class="tab-btn" onclick="showTab('programmes-section',event);loadProgrammesNotifs()" style="border:1px solid rgba(0,200,150,.35);"><i class="fas fa-bell"></i> PROGRAMMES / NOTIFS</button>
+        <button class="tab-btn" onclick="showTab('xstream-section',event);xsLoadList()" style="border:1px solid rgba(0,175,255,.35);"><i class="fas fa-satellite-dish"></i> XSTREAM</button>
+        <button class="tab-btn" onclick="showTab('serverlog-section',event);srvLogStart();qLoadQuarantine()" style="border:1px solid rgba(255,60,60,.35);"><i class="fas fa-terminal"></i> LOG SERVEUR</button>
     </div>
 
     <!-- ---- UTILISATEURS ---- -->
@@ -696,7 +860,7 @@
                 <!-- ── FedaPay / FeexPay : le client finalise lui-même dans son app ── -->
                 <div id="rcp-widget-box" style="display:none;font-size:12px;color:#888;margin-bottom:8px;line-height:1.6;">
                     <i class="fas fa-circle-info" style="color:#ffd700;"></i>
-                    <span id="rcp-widget-provider-name">FedaPay</span> nécessite que le client finalise le paiement lui-même dans l'app Prime TV (widget intégré). Envoyez-lui les instructions ci-dessous ; dès que son paiement est validé et que son abonnement apparaît en base, la TV sera <b>appairée automatiquement</b>.
+                    <span id="rcp-widget-provider-name">FedaPay</span> nécessite que le client finalise le paiement lui-même dans l'app My Box Smart (widget intégré). Envoyez-lui les instructions ci-dessous ; dès que son paiement est validé et que son abonnement apparaît en base, la TV sera <b>appairée automatiquement</b>.
                 </div>
 
                 <button id="rcp-btn-launch" onclick="rcpLaunchPayment()" style="background:linear-gradient(135deg,#ffd700,#f39c12);color:#111;"><i class="fas fa-money-bill-wave"></i> LANCER LE PAIEMENT CHEZ LE CLIENT</button>
@@ -761,10 +925,12 @@
             <input type="text" id="new-source-link" placeholder="https://..." style="width:420px;">
             <button onclick="addSource()"><i class="fas fa-plus"></i> AJOUTER</button>
         </div>
-        <table>
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
             <thead><tr><th>#</th><th>NOM</th><th>LIEN</th><th>ACTIONS</th></tr></thead>
             <tbody id="sources-body"></tbody>
         </table>
+</div>
     </div>
 
     <!-- ---- CHAÎNES DIRECTES ---- -->
@@ -780,10 +946,12 @@
             </select>
             <button onclick="addChaine()"><i class="fas fa-plus"></i> AJOUTER</button>
         </div>
-        <table>
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
             <thead><tr><th>NOM</th><th>URL</th><th>GROUPE</th><th>STATUT</th><th>ACTIONS</th></tr></thead>
             <tbody id="chaines-body"></tbody>
         </table>
+</div>
     </div>
 
     <!-- ---- ABONNEMENTS / TARIFS ---- -->
@@ -792,7 +960,7 @@
         <!-- Modal overlay -->
         <div id="tarif-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center;">
             <div style="background:#1e1e1e; border:1px solid #333; border-radius:12px; padding:28px 30px; width:500px; max-width:95vw; position:relative;">
-                <h3 id="tarif-modal-title" style="margin:0 0 20px; color:#4CAF50; font-size:16px;"><i class="fas fa-tags"></i> NOUVEAU TARIF</h3>
+                <h3 id="tarif-modal-title" style="margin:0 0 20px; color:#e50914; font-size:16px;"><i class="fas fa-tags"></i> NOUVEAU TARIF</h3>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div>
@@ -826,8 +994,8 @@
                     <div>
                         <label style="font-size:11px; color:#888; display:block; margin-bottom:4px;">Couleur badge</label>
                         <div style="display:flex; gap:6px; align-items:center;">
-                            <input id="tf-badge-color" type="color" value="#4CAF50" style="width:46px; height:38px; padding:2px; border-radius:5px; cursor:pointer; border:1px solid #444; background:#222;">
-                            <input id="tf-badge-color-text" type="text" value="#4CAF50" placeholder="#4CAF50" style="flex:1;" oninput="document.getElementById('tf-badge-color').value=this.value">
+                            <input id="tf-badge-color" type="color" value="#e50914" style="width:46px; height:38px; padding:2px; border-radius:5px; cursor:pointer; border:1px solid #444; background:#222;">
+                            <input id="tf-badge-color-text" type="text" value="#e50914" placeholder="#e50914" style="flex:1;" oninput="document.getElementById('tf-badge-color').value=this.value">
                         </div>
                     </div>
                     <div>
@@ -836,7 +1004,7 @@
                     </div>
                     <div style="display:flex; align-items:flex-end;">
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding-bottom:8px;">
-                            <input id="tf-actif" type="checkbox" checked style="width:16px; height:16px; accent-color:#4CAF50; cursor:pointer;">
+                            <input id="tf-actif" type="checkbox" checked style="width:16px; height:16px; accent-color:#e50914; cursor:pointer;">
                             <span style="font-size:13px; color:#ccc;">Tarif actif</span>
                         </label>
                     </div>
@@ -861,10 +1029,12 @@
         <div id="tarifs-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-bottom:20px;"></div>
 
         <!-- Table view -->
-        <table>
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
             <thead><tr><th>ID</th><th>OFFRE</th><th>ÉCRANS</th><th>JOURS</th><th>PRIX</th><th>PROMO</th><th>BADGE</th><th>ORDRE</th><th>ACTIF</th><th>ACTIONS</th></tr></thead>
             <tbody id="tarifs-body"></tbody>
         </table>
+</div>
     </div>
 
     <!-- ---- MESSAGE ---- -->
@@ -964,9 +1134,12 @@
         </div>
 
         <div class="prio-export-bar">
-            <button class="prio-btn prio-btn-gray" onclick="prioExportJSON()"><i class="fas fa-download"></i> Exporter channels.json</button>
+            <button class="prio-btn prio-btn-gray" onclick="prioExportJSON()"><i class="fas fa-download"></i> Exporter JSON</button>
+            <button class="prio-btn prio-btn-gray" onclick="prioExportM3U()"><i class="fas fa-download"></i> Exporter M3U</button>
+            <button class="prio-btn prio-btn-gray" onclick="prioExportZIP()"><i class="fas fa-file-archive" style="color:#ffa500;"></i> Exporter ZIP (JSON+M3U)</button>
             <button class="prio-btn prio-btn-gray" onclick="prioToggleAddPanel()"><i class="fas fa-plus-circle" style="color:#2ecc71;"></i> Ajouter une chaîne manuellement</button>
-            <button class="prio-btn prio-btn-gray" onclick="prioToggleM3uPanel()"><i class="fas fa-file-import" style="color:#0af;"></i> Importer un fichier M3U</button>
+            <button class="prio-btn prio-btn-gray" onclick="prioToggleM3uPanel()"><i class="fas fa-file-import" style="color:#0af;"></i> Importer M3U / JSON / ZIP</button>
+            <button class="prio-btn prio-btn-gray" onclick="prioToggleCleanupPanel()"><i class="fas fa-broom" style="color:#e50914;"></i> Filtrer / Nettoyer par lien</button>
             <span id="prio-export-info"></span>
         </div>
 
@@ -1000,19 +1173,31 @@
             </div>
         </div>
 
-        <!-- ── PANNEAU IMPORT M3U ── -->
+        <!-- ── PANNEAU IMPORT M3U / JSON / ZIP ── -->
         <div id="prio-m3u-panel">
             <div id="prio-m3u-panel-header" onclick="prioToggleM3uPanel()">
-                <span id="prio-m3u-panel-title"><i class="fas fa-file-import" style="margin-right:6px;"></i>IMPORTER UN FICHIER M3U / LIEN M3U</span>
+                <span id="prio-m3u-panel-title"><i class="fas fa-file-import" style="margin-right:6px;"></i>IMPORTER DES CHAÎNES (M3U / JSON / ZIP)</span>
                 <i class="fas fa-chevron-down" id="prio-m3u-panel-chevron" style="color:#333;font-size:11px;transition:transform .2s;"></i>
             </div>
             <div id="prio-m3u-panel-body">
                 <div style="font-size:11px;color:#444;margin-bottom:10px;letter-spacing:.5px;">
-                    Les chaînes du M3U seront <b style="color:#0af;">fusionnées</b> avec celles existantes. Les doublons (même URL) sont ignorés automatiquement.
+                    Les chaînes importées seront <b style="color:#0af;">fusionnées</b> avec celles existantes. Les doublons (même URL) sont ignorés automatiquement.
                 </div>
 
+                <!-- XTREAM -->
+                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 1 — IDENTIFIANTS XTREAM (serveur / utilisateur / mot de passe)</div>
+                <div class="prio-m3u-row" style="flex-wrap:wrap;">
+                    <input type="text" id="prio-xt-host" placeholder="http://serveur.exemple.com:8080" style="flex:2;min-width:200px;">
+                    <input type="text" id="prio-xt-user" placeholder="Utilisateur" style="flex:1;min-width:110px;">
+                    <input type="password" id="prio-xt-pass" placeholder="Mot de passe" style="flex:1;min-width:110px;">
+                    <button class="prio-btn prio-btn-gray" onclick="prioImportXtream()" style="white-space:nowrap;"><i class="fas fa-satellite-dish" style="color:#2ecc71;"></i> Collecter les chaînes</button>
+                </div>
+                <div id="prio-xt-msg" style="font-size:11px;margin-top:4px;margin-bottom:10px;min-height:14px;"></div>
+
+                <div class="prio-m3u-divider"><span>OU</span></div>
+
                 <!-- URL -->
-                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 1 — LIEN URL M3U</div>
+                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 2 — LIEN URL M3U</div>
                 <div class="prio-m3u-row">
                     <input type="text" id="prio-m3u-url-input" placeholder="https://example.com/playlist.m3u ou .m3u8">
                     <button class="prio-btn prio-btn-gray" onclick="prioImportM3uUrl()" style="white-space:nowrap;"><i class="fas fa-cloud-download-alt" style="color:#0af;"></i> Charger URL</button>
@@ -1020,15 +1205,41 @@
 
                 <div class="prio-m3u-divider"><span>OU</span></div>
 
-                <!-- Fichier local -->
-                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 2 — FICHIER LOCAL</div>
+                <!-- Fichier local M3U -->
+                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 3 — FICHIER M3U / M3U8 / TXT / TS</div>
                 <div style="margin-bottom:10px;">
                     <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:8px 14px;font-size:12px;color:#aaa;transition:background .2s;"
                         onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='#141414'">
-                        <i class="fas fa-folder-open" style="color:#0af;"></i> Choisir un fichier .m3u / .m3u8 / .txt
-                        <input type="file" id="prio-m3u-file-input" accept=".m3u,.m3u8,.txt" style="display:none;" onchange="prioImportM3uFile(this)">
+                        <i class="fas fa-folder-open" style="color:#0af;"></i> Choisir un fichier .m3u / .m3u8 / .txt / .ts
+                        <input type="file" id="prio-m3u-file-input" accept=".m3u,.m3u8,.txt,.ts" style="display:none;" onchange="prioImportM3uFile(this)">
                     </label>
                     <span id="prio-m3u-file-name" style="font-size:11px;color:#444;margin-left:10px;"></span>
+                </div>
+
+                <div class="prio-m3u-divider"><span>OU</span></div>
+
+                <!-- Fichier local JSON -->
+                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 4 — FICHIER JSON (channels.json)</div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:8px 14px;font-size:12px;color:#aaa;transition:background .2s;"
+                        onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='#141414'">
+                        <i class="fas fa-file-code" style="color:#2ecc71;"></i> Choisir un fichier .json
+                        <input type="file" id="prio-json-file-input-inline" accept=".json" style="display:none;" onchange="prioImportJsonFile(this)">
+                    </label>
+                    <span id="prio-json-file-name" style="font-size:11px;color:#444;margin-left:10px;"></span>
+                </div>
+
+                <div class="prio-m3u-divider"><span>OU</span></div>
+
+                <!-- Fichier local ZIP -->
+                <div style="font-size:10px;color:#333;letter-spacing:1.5px;margin-bottom:5px;">OPTION 5 — ARCHIVE ZIP (plusieurs fichiers .m3u/.m3u8/.json/.txt à la fois)</div>
+                <div style="margin-bottom:10px;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:8px 14px;font-size:12px;color:#aaa;transition:background .2s;"
+                        onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='#141414'">
+                        <i class="fas fa-file-archive" style="color:#ffa500;"></i> Choisir une archive .zip
+                        <input type="file" id="prio-zip-file-input-inline" accept=".zip" style="display:none;" onchange="prioImportZipFile(this)">
+                    </label>
+                    <span id="prio-zip-file-name" style="font-size:11px;color:#444;margin-left:10px;"></span>
                 </div>
 
                 <!-- Prévisualisation avant fusion -->
@@ -1048,6 +1259,30 @@
                     </div>
                 </div>
                 <div id="prio-m3u-msg" style="font-size:11px;margin-top:8px;min-height:14px;"></div>
+            </div>
+        </div>
+
+        <!-- ── PANNEAU FILTRE / NETTOYAGE PAR LIEN ── -->
+        <div id="prio-cleanup-panel">
+            <div id="prio-cleanup-panel-header" onclick="prioToggleCleanupPanel()">
+                <span id="prio-cleanup-panel-title"><i class="fas fa-broom" style="margin-right:6px;"></i>FILTRER / SUPPRIMER PAR LIEN (host, mot-clé...)</span>
+                <i class="fas fa-chevron-down" id="prio-cleanup-panel-chevron" style="color:#333;font-size:11px;transition:transform .2s;"></i>
+            </div>
+            <div id="prio-cleanup-panel-body">
+                <div style="font-size:11px;color:#444;margin-bottom:10px;letter-spacing:.5px;">
+                    Filtre la liste "Toutes les chaînes" par un morceau du lien (host, domaine, clé...), ou supprime en masse toutes les chaînes dont l'URL contient ce texte — utile pour retirer un ancien serveur (ex: <code style="color:#ffa500;">rmhat.com</code>).
+                </div>
+                <div class="prio-m3u-row">
+                    <input type="text" id="prio-link-filter-input" placeholder="Ex: rmhat.com, dupefik.com, /live/, .rmhat..." oninput="prioApplyLinkFilter()">
+                    <button class="prio-btn prio-btn-gray" onclick="prioApplyLinkFilter()" style="white-space:nowrap;"><i class="fas fa-filter" style="color:#0af;"></i> Filtrer la liste</button>
+                    <button class="prio-btn prio-btn-gray" onclick="prioClearLinkFilter()" style="white-space:nowrap;"><i class="fas fa-times"></i> Effacer filtre</button>
+                </div>
+                <div id="prio-link-filter-count" style="font-size:11px;color:#0af;margin-top:8px;min-height:14px;"></div>
+                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                    <button class="prio-sel-btn prio-sel-btn-orange" onclick="prioQuarantineByLinkFilter()"><i class="fas fa-ban"></i> Mettre en quarantaine tout le résultat</button>
+                    <button class="prio-sel-btn prio-sel-btn-red" onclick="prioDeleteByLinkFilter()"><i class="fas fa-trash"></i> Supprimer définitivement tout le résultat</button>
+                </div>
+                <div id="prio-cleanup-msg" style="font-size:11px;margin-top:8px;min-height:14px;"></div>
             </div>
         </div>
 
@@ -1157,7 +1392,7 @@
             <div class="parr-a-stat"><div class="parr-a-stat-val" id="pas-paraineurs">—</div><div class="parr-a-stat-lbl">PARAINEURS</div></div>
             <div class="parr-a-stat"><div class="parr-a-stat-val" id="pas-commissions">—</div><div class="parr-a-stat-lbl">COMMISSIONS VERSÉES</div></div>
             <div class="parr-a-stat"><div class="parr-a-stat-val" id="pas-total" style="color:#2ecc71;">—</div><div class="parr-a-stat-lbl">TOTAL FCFA DISTRIBUÉ</div></div>
-            <div class="parr-a-stat"><div class="parr-a-stat-val" id="pas-attente" style="color:#4CAF50;">—</div><div class="parr-a-stat-lbl">RETRAITS EN ATTENTE</div></div>
+            <div class="parr-a-stat"><div class="parr-a-stat-val" id="pas-attente" style="color:#e50914;">—</div><div class="parr-a-stat-lbl">RETRAITS EN ATTENTE</div></div>
         </div>
 
         <!-- Sub-navigation -->
@@ -1174,26 +1409,32 @@
                 <div style="color:#666;font-size:13px;"><i class="fas fa-info-circle"></i> Comptes paraineurs inscrits</div>
                 <button onclick="loadParrainageAdmin()" style="background:#333;color:#aaa;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;"><i class="fas fa-sync-alt"></i> Actualiser</button>
             </div>
-            <table>
+            <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
                 <thead><tr><th>NOM / PRÉNOM</th><th>EMAIL</th><th>TÉL</th><th>CODE</th><th>RÉSEAU</th><th>SOLDE</th><th>TOTAL GAGNÉ</th><th>STATUT</th><th>ACTIONS</th></tr></thead>
                 <tbody id="parr-tbody-paraineurs"><tr><td colspan="9" style="text-align:center;color:#444;padding:30px;">Chargement...</td></tr></tbody>
             </table>
+</div>
         </div>
 
         <!-- Commissions -->
         <div class="parr-sub" id="parr-sub-commissions">
-            <table>
+            <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
                 <thead><tr><th>DATE</th><th>PARAINEUR</th><th>CODE</th><th>CLIENT</th><th>ABO (FCFA)</th><th>COMMISSION 20%</th></tr></thead>
                 <tbody id="parr-tbody-commissions"><tr><td colspan="6" style="text-align:center;color:#444;padding:30px;">Chargement...</td></tr></tbody>
             </table>
+</div>
         </div>
 
         <!-- Retraits -->
         <div class="parr-sub" id="parr-sub-retraits">
-            <table>
+            <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
                 <thead><tr><th>DATE</th><th>PARAINEUR</th><th>MONTANT</th><th>RÉSEAU</th><th>NUMÉRO</th><th>STATUT</th><th>REF KKIAPAY</th><th>ACTIONS</th></tr></thead>
                 <tbody id="parr-tbody-retraits"><tr><td colspan="8" style="text-align:center;color:#444;padding:30px;">Chargement...</td></tr></tbody>
             </table>
+</div>
         </div>
 
         <!-- Config KKiaPay -->
@@ -1282,7 +1523,7 @@ ALTER TABLE config ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 20;<
         <div style="display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;">
             <div class="stat-card"><div class="stat-val" id="rs-total" style="color:#00bfff;">—</div><div class="stat-lbl">Revendeurs total</div></div>
             <div class="stat-card"><div class="stat-val" id="rs-actifs" style="color:#2ecc71;">—</div><div class="stat-lbl">Actifs</div></div>
-            <div class="stat-card"><div class="stat-val" id="rs-inactifs" style="color:#4CAF50;">—</div><div class="stat-lbl">Inactifs</div></div>
+            <div class="stat-card"><div class="stat-val" id="rs-inactifs" style="color:#e50914;">—</div><div class="stat-lbl">Inactifs</div></div>
         </div>
 
         <!-- Toolbar -->
@@ -1301,7 +1542,7 @@ ALTER TABLE config ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 20;<
         <div style="background:#0d1a0d;border:1px solid #1a3a1a;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
             <div style="flex:1;min-width:220px;">
                 <div style="font-size:11px;color:#2ecc71;font-weight:700;letter-spacing:1.5px;margin-bottom:4px;"><i class="fas fa-file-code"></i> GÉNÉRATEUR INDEX.HTML</div>
-                <div id="rs-template-status" style="font-size:12px;color:#555;"><i class="fas fa-exclamation-circle" style="color:#4CAF50;"></i> Aucun template chargé — chargez votre <strong style="color:#aaa;">index_reseller.html</strong> pour activer la génération</div>
+                <div id="rs-template-status" style="font-size:12px;color:#555;"><i class="fas fa-exclamation-circle" style="color:#e50914;"></i> Aucun template chargé — chargez votre <strong style="color:#aaa;">index_reseller.html</strong> pour activer la génération</div>
             </div>
             <button onclick="document.getElementById('rs-template-input').click()" style="background:linear-gradient(135deg,#2ecc71,#1a8a4a);color:#fff;padding:10px 18px;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">
                 <i class="fas fa-folder-open"></i> Charger le template
@@ -1314,7 +1555,8 @@ ALTER TABLE config ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 20;<
         <!-- Table complète -->
         <div style="margin-top:28px;">
             <div style="font-size:11px;letter-spacing:2px;color:#00bfff;font-weight:700;margin-bottom:12px;"><i class="fas fa-table"></i> TABLEAU COMPLET</div>
-            <table>
+            <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table>
                 <thead>
                     <tr>
                         <th>RESELLER ID</th>
@@ -1331,6 +1573,7 @@ ALTER TABLE config ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 20;<
                 </thead>
                 <tbody id="rs-tbody"></tbody>
             </table>
+</div>
         </div>
 
         <!-- Migration SQL -->
@@ -1531,6 +1774,59 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
         </div>
     </div><!-- /#openrouter-section -->
 
+    <!-- ════ LOG SERVEUR TEMPS RÉEL ════ -->
+    <div id="serverlog-section" class="section">
+        <h2 style="color:#ff3c3c;margin:0 0 6px;font-size:16px;"><i class="fas fa-terminal"></i> Log Serveur (VPS en direct)</h2>
+        <p style="color:#555;font-size:12px;margin:0 0 16px;">Affiche les logs bruts du serveur myptvi (proxy Vavoo) en temps réel — plus besoin de se connecter en SSH pour voir pourquoi une chaîne ne charge pas. Rafraîchissement automatique toutes les 2 secondes.</p>
+
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+            <div class="stat-card"><div class="stat-val" id="srvlog-st-total">—</div><div class="stat-lbl">Lignes (500 max)</div></div>
+            <div class="stat-card" style="border-color:rgba(229,9,20,.25);"><div class="stat-val" id="srvlog-st-errors" style="color:#e50914;">—</div><div class="stat-lbl">Erreurs / échecs</div></div>
+            <input id="srvlog-filter" type="text" placeholder="Filtrer (ex: qmaalhy7, 400, mismatch, nom de chaîne...)" style="flex:1;min-width:220px;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:9px 12px;color:#eee;font-size:12px;" oninput="srvLogRender()">
+            <button id="srvlog-pause-btn" onclick="srvLogTogglePause()" style="background:#241a1a;color:#ff8c8c;border:1px solid rgba(229,9,20,.35);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:700;"><i class="fas fa-pause"></i> Pause</button>
+        </div>
+
+        <div id="srvlog-box" style="background:#0a0a0a;border:1px solid #262626;border-radius:8px;padding:12px;height:520px;overflow-y:auto;font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6;white-space:pre-wrap;word-break:break-all;"></div>
+
+        <p style="color:#444;font-size:10.5px;margin-top:10px;">Source : <code id="srvlog-url-display">—</code> — met en évidence les hôtes upstream qui échouent le plus souvent (utile pour identifier une source Vavoo capricieuse comme dans les diagnostics précédents).</p>
+
+        <!-- ════ ANALYSE & QUARANTAINE DES CHAÎNES ════ -->
+        <div style="margin-top:32px;padding-top:24px;border-top:1px solid #262626;">
+            <h2 style="color:#ff8c00;margin:0 0 6px;font-size:16px;"><i class="fas fa-shield-virus"></i> Analyse & Quarantaine des chaînes</h2>
+        <p style="color:#555;font-size:12px;margin:0 0 16px;">Scan manuel des chaînes à la demande — clique sur "Scanner maintenant" pour tester toutes les chaînes et mettre automatiquement en quarantaine celles qui échouent (elles disparaissent de l'app cliente, sans perturber les abonnés). Aucun scan automatique programmé : tout est déclenché ici, manuellement.</p>
+
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+                <div class="stat-card"><div class="stat-val" id="qscan-st-quarantined">—</div><div class="stat-lbl">Chaînes en quarantaine</div></div>
+                <div class="stat-card"><div class="stat-val" id="qscan-st-last" style="font-size:12px;">—</div><div class="stat-lbl">Dernier scan</div></div>
+                <button id="qscan-btn" onclick="qScanNow()" style="background:#2a1a00;color:#ff8c00;border:1px solid rgba(255,140,0,.4);padding:9px 18px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:700;"><i class="fas fa-satellite-dish"></i> Scanner maintenant</button>
+                <button onclick="qLoadQuarantine()" style="background:#222;border:1px solid #333;padding:9px 16px;border-radius:6px;font-size:12px;"><i class="fas fa-sync-alt"></i> Actualiser</button>
+            </div>
+
+            <div id="qscan-progress" style="display:none;background:#1a1a0a;border:1px solid rgba(255,140,0,.3);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#ff8c00;"></div>
+
+            <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+                <input id="qscan-manual-url" type="text" list="qscan-datalist" placeholder="Nom exact ou ID de la chaîne à mettre en quarantaine manuellement..." style="flex:1;min-width:280px;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:9px 12px;color:#eee;font-size:12px;">
+                <datalist id="qscan-datalist"></datalist>
+                <button onclick="qAddManual()" style="background:#241a1a;color:#ff8c8c;border:1px solid rgba(229,9,20,.35);padding:9px 16px;border-radius:6px;font-size:12px;cursor:pointer;"><i class="fas fa-ban"></i> Mettre en quarantaine</button>
+            </div>
+
+            <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table id="qscan-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead>
+                    <tr style="text-align:left;color:#888;border-bottom:1px solid #333;">
+                        <th style="padding:8px;">Chaîne</th>
+                        <th style="padding:8px;">Raison</th>
+                        <th style="padding:8px;">Détecté</th>
+                        <th style="padding:8px;">Type</th>
+                        <th style="padding:8px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="qscan-tbody"><tr><td colspan="5" style="padding:14px;color:#555;">Chargement...</td></tr></tbody>
+            </table>
+</div>
+        </div><!-- /quarantaine -->
+    </div><!-- /#serverlog-section -->
+
     <!-- ════ DIAGNOSTIC TEMPS RÉEL ════ -->
     <div id="diagnostic-section" class="section">
         <h2 style="color:#ff8c00;margin:0 0 6px;font-size:16px;"><i class="fas fa-stethoscope"></i> Diagnostic temps réel</h2>
@@ -1538,7 +1834,7 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
 
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
             <div class="stat-card"><div class="stat-val" id="diag-st-total">—</div><div class="stat-lbl">Logs (200 derniers)</div></div>
-            <div class="stat-card" style="border-color:rgba(76,175,80,.25);"><div class="stat-val" id="diag-st-ouverts" style="color:#4CAF50;">—</div><div class="stat-lbl">Non résolus</div></div>
+            <div class="stat-card" style="border-color:rgba(229,9,20,.25);"><div class="stat-val" id="diag-st-ouverts" style="color:#e50914;">—</div><div class="stat-lbl">Non résolus</div></div>
             <div class="stat-card"><div class="stat-val" id="diag-st-24h">—</div><div class="stat-lbl">Dernières 24h</div></div>
             <div class="stat-card" style="border-color:rgba(0,191,255,.25);"><div class="stat-val" id="diag-st-sessions" style="color:#0af;">—</div><div class="stat-lbl">Ouvertures app (session)</div></div>
         </div>
@@ -1565,7 +1861,8 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
             <button onclick="loadDiagnostics()" style="background:#222;border:1px solid #333;padding:9px 16px;border-radius:6px;font-size:12px;"><i class="fas fa-sync-alt"></i> Actualiser</button>
         </div>
 
-        <table id="diag-table">
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table id="diag-table">
             <thead>
                 <tr style="text-align:left;font-size:11px;color:#888;">
                     <th style="padding:10px;">Log ID</th>
@@ -1584,6 +1881,7 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
                 <tr><td colspan="10" style="padding:20px;color:#555;text-align:center;">Chargement...</td></tr>
             </tbody>
         </table>
+</div>
 
         <!-- ════ APPAREILS EN LIGNE — STATUT COMPLET + CONTRÔLE À DISTANCE ════ -->
         <h2 style="color:#ff8c00;margin:32px 0 6px;font-size:16px;"><i class="fas fa-mobile-screen-button"></i> Appareils en ligne — statut complet & contrôle à distance</h2>
@@ -1592,7 +1890,8 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
             <input type="text" id="devst-search" placeholder="Rechercher : appareil, clé, chaîne..." oninput="_devstFilterLocal()" style="flex:1;min-width:220px;padding:9px 12px;background:#111;border:1px solid #333;border-radius:6px;color:#fff;font-size:12px;">
             <button onclick="loadDeviceStatuses()" style="background:#222;border:1px solid #333;padding:9px 16px;border-radius:6px;font-size:12px;"><i class="fas fa-sync-alt"></i> Actualiser</button>
         </div>
-        <table id="devst-table">
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table id="devst-table">
             <thead>
                 <tr style="text-align:left;font-size:11px;color:#888;">
                     <th style="padding:10px;">Appareil / OS</th>
@@ -1609,6 +1908,7 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
                 <tr><td colspan="8" style="padding:20px;color:#555;text-align:center;">Chargement...</td></tr>
             </tbody>
         </table>
+</div>
 
         <!-- ════ INFOS SYSTÈME & INTERVENTION À DISTANCE (par appareil) ════ -->
         <div id="device-intervention-panel" style="display:none;margin-top:20px;background:#161616;border:1px solid #333;border-radius:8px;padding:14px;">
@@ -1621,17 +1921,21 @@ CREATE POLICY "openrouter_keys_all" ON openrouter_keys FOR ALL USING (true) WITH
                 <button onclick="dipSendAction('get_logs')" style="background:#222;border:1px solid #555;padding:8px 14px;border-radius:6px;color:#fff;font-size:12px;"><i class="fas fa-file-alt"></i> Voir logs</button>
                 <button onclick="dipSendAction('reload_sources')" style="background:#222;border:1px solid #555;padding:8px 14px;border-radius:6px;color:#fff;font-size:12px;"><i class="fas fa-sync"></i> Recharger sources</button>
                 <button onclick="dipSendAction('clear_cache')" style="background:#222;border:1px solid #555;padding:8px 14px;border-radius:6px;color:#fff;font-size:12px;"><i class="fas fa-broom"></i> Vider cache</button>
-                <button onclick="dipSendAction('restart_app')" style="background:#5a1a1a;border:1px solid #4CAF50;padding:8px 14px;border-radius:6px;color:#fff;font-size:12px;"><i class="fas fa-power-off"></i> Redémarrer l'app</button>
+                <button onclick="dipSendAction('restart_app')" style="background:#5a1a1a;border:1px solid #e50914;padding:8px 14px;border-radius:6px;color:#fff;font-size:12px;"><i class="fas fa-power-off"></i> Redémarrer l'app</button>
             </div>
 
             <div style="max-height:220px;overflow-y:auto;border-top:1px solid #333;padding-top:8px;">
                 <div style="font-size:11px;color:#888;margin-bottom:6px;">Journal applicatif (device_app_logs)</div>
-                <table style="width:100%;font-size:11px;color:#ccc;"><tbody id="dip-logs-tbody"></tbody></table>
+                <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table style="width:100%;font-size:11px;color:#ccc;"><tbody id="dip-logs-tbody"></tbody></table>
+</div>
             </div>
 
             <div style="max-height:160px;overflow-y:auto;border-top:1px solid #333;margin-top:10px;padding-top:8px;">
                 <div style="font-size:11px;color:#888;margin-bottom:6px;">Historique interventions</div>
-                <table style="width:100%;font-size:11px;color:#ccc;"><tbody id="dip-interventions-tbody"></tbody></table>
+                <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table style="width:100%;font-size:11px;color:#ccc;"><tbody id="dip-interventions-tbody"></tbody></table>
+</div>
             </div>
 
             <details style="margin-top:14px;">
@@ -1707,7 +2011,8 @@ create policy "device_interventions_all" on device_interventions for all using (
             <button onclick="pnCreate()" style="margin-top:10px;background:#00c896;color:#000;font-weight:bold;padding:10px 18px;border:none;border-radius:6px;"><i class="fas fa-plus"></i> Programmer la notification</button>
         </div>
 
-        <table style="width:100%;font-size:12px;color:#ccc;border-collapse:collapse;">
+        <div class="table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+<table style="width:100%;font-size:12px;color:#ccc;border-collapse:collapse;">
             <thead>
                 <tr style="text-align:left;font-size:11px;color:#888;">
                     <th style="padding:6px;">Titre</th><th>Chaîne</th><th>Catégorie</th><th>Heure</th><th>Préavis</th><th>Statut</th><th>Actions</th>
@@ -1715,6 +2020,7 @@ create policy "device_interventions_all" on device_interventions for all using (
             </thead>
             <tbody id="pn-tbody"><tr><td colspan="7" style="padding:14px;color:#555;text-align:center;">Chargement...</td></tr></tbody>
         </table>
+</div>
 
         <details style="margin-top:16px;">
             <summary style="color:#888;font-size:11px;cursor:pointer;">SQL requis (programmes_notifications) — à exécuter une fois dans Supabase</summary>
@@ -1758,6 +2064,55 @@ create policy "device_notifications_recues_all" on device_notifications_recues f
         </details>
     </div><!-- /#programmes-section -->
 
+    <div id="xstream-section" class="section">
+        <h3><i class="fas fa-satellite-dish"></i> Identifiants Xtream (à saisir dans l'appli IPTV du client)</h3>
+        <p style="font-size:12px;color:#777;margin:0 0 14px;">
+            Génère un login/mot de passe Xtream Codes pour un abonné existant. Le client les saisit dans
+            n'importe quelle appli IPTV (TiviMate, IPTV Smarters, GSE Smart IPTV...) avec l'URL du serveur.
+            Le blocage / l'expiration déjà gérés pour cet abonné s'appliquent automatiquement — rien de plus à synchroniser.
+        </p>
+
+        <div style="margin-bottom:16px;">
+            <label style="font-size:11px;color:#999;">Clé abonné (existant)</label><br>
+            <input id="xs-cle" placeholder="BOX-XXXXXX" style="text-transform:uppercase;">
+            <button onclick="xsGenerate()"><i class="fas fa-key"></i> GÉNÉRER / RÉGÉNÉRER LES IDENTIFIANTS</button>
+        </div>
+
+        <div id="xs-result" style="display:none;background:#0d0d0d;border:1px solid #2ecc71;border-radius:8px;padding:14px;font-size:13px;line-height:1.9;margin-bottom:20px;">
+            <div>Serveur&nbsp;: <code id="xs-server"></code></div>
+            <div>Utilisateur&nbsp;: <code id="xs-user"></code></div>
+            <div>Mot de passe&nbsp;: <code id="xs-pass"></code></div>
+            <div style="margin-top:8px;">
+                <button onclick="xsCopy()"><i class="fas fa-copy"></i> Copier pour le client</button>
+            </div>
+        </div>
+
+        <hr style="border-color:#222;margin:20px 0;">
+
+        <h3 style="font-size:14px;"><i class="fas fa-list"></i> Abonnés avec accès Xtream</h3>
+        <div id="xs-list" style="font-size:12px;">Chargement...</div>
+
+        <details style="margin-top:24px;">
+            <summary style="color:#888;font-size:11px;cursor:pointer;">SQL requis (colonnes xtream_user/xtream_pass) — à exécuter une fois dans Supabase</summary>
+            <pre style="font-size:11px;color:#00afff;font-family:monospace;margin:8px 0 0;white-space:pre-wrap;line-height:1.7;background:#060606;padding:14px;border-radius:8px;">alter table utilisateurs
+    add column if not exists xtream_user text unique,
+    add column if not exists xtream_pass text;
+
+create index if not exists idx_utilisateurs_xtream_user on utilisateurs (xtream_user);
+
+create table if not exists xtream_sessions (
+    id           bigint generated always as identity primary key,
+    xtream_user  text not null,
+    cle          text not null,
+    ip           text,
+    user_agent   text,
+    last_seen    timestamptz not null default now(),
+    created_at   timestamptz not null default now()
+);
+create index if not exists idx_xtream_sessions_user on xtream_sessions (xtream_user, last_seen desc);</pre>
+        </details>
+    </div><!-- /#xstream-section -->
+
     <!-- ════ MODAL DÉTAIL DIAGNOSTIC ════ -->
     <div id="diag-modal-overlay" onclick="if(event.target===this)closeDiagModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;align-items:center;justify-content:center;">
         <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:26px;max-width:560px;width:92%;max-height:88vh;overflow-y:auto;">
@@ -1785,7 +2140,7 @@ create policy "device_notifications_recues_all" on device_notifications_recues f
     <!-- ════ MODAL MOTIF DE BLOCAGE ════ -->
     <div id="block-modal-overlay" onclick="if(event.target===this)closeBlockModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:650;align-items:center;justify-content:center;">
         <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:26px;max-width:480px;width:92%;max-height:88vh;overflow-y:auto;">
-            <h3 style="margin:0 0 6px;font-size:15px;color:#4CAF50;"><i class="fas fa-ban"></i> Bloquer l'abonné <span id="bm-cle" style="color:#ff8c00;">—</span></h3>
+            <h3 style="margin:0 0 6px;font-size:15px;color:#e50914;"><i class="fas fa-ban"></i> Bloquer l'abonné <span id="bm-cle" style="color:#ff8c00;">—</span></h3>
             <p style="color:#888;font-size:12px;margin:0 0 16px;">Le motif choisi sera affiché clairement au client sur son écran de blocage.</p>
 
             <label style="display:block;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Motif</label>
@@ -1809,7 +2164,7 @@ create policy "device_notifications_recues_all" on device_notifications_recues f
             </div>
 
             <div class="flux-btn-row">
-                <button class="flux-btn flux-btn-repair" onclick="_confirmBlockUser()" style="background:rgba(76,175,80,.15);border-color:#4CAF50;color:#ff6b6b;"><i class="fas fa-ban"></i> Bloquer</button>
+                <button class="flux-btn flux-btn-repair" onclick="_confirmBlockUser()" style="background:rgba(229,9,20,.15);border-color:#e50914;color:#ff6b6b;"><i class="fas fa-ban"></i> Bloquer</button>
                 <button class="flux-btn flux-btn-close" onclick="closeBlockModal()"><i class="fas fa-times"></i> Annuler</button>
             </div>
         </div>
@@ -1977,7 +2332,7 @@ create policy "device_notifications_recues_all" on device_notifications_recues f
     <div class="prio-ctx-sep"></div>
     <!-- Quarantaine / Supprimer -->
     <div class="prio-ctx-item" id="ctx-quarantine" style="color:#ff7800;"><i class="fas fa-ban" style="color:#ff7800;"></i> Mettre en quarantaine</div>
-    <div class="prio-ctx-item" id="ctx-delete" style="color:#4CAF50;"><i class="fas fa-trash" style="color:#4CAF50;"></i> Supprimer définitivement</div>
+    <div class="prio-ctx-item" id="ctx-delete" style="color:#e50914;"><i class="fas fa-trash" style="color:#e50914;"></i> Supprimer définitivement</div>
 </div>
 
 <!-- Modale confirmation suppression définitive -->
@@ -1986,7 +2341,7 @@ create policy "device_notifications_recues_all" on device_notifications_recues f
         <h3><i class="fas fa-exclamation-triangle"></i> Suppression définitive</h3>
         <p>Vous êtes sur le point de supprimer<br>
            <span class="modal-count" id="prio-delete-modal-count">0</span>
-           chaîne(s) de façon <b style="color:#4CAF50;">irréversible</b>.<br>
+           chaîne(s) de façon <b style="color:#e50914;">irréversible</b>.<br>
            Elles ne pourront pas être restaurées.</p>
         <div class="modal-btn-row">
             <button class="modal-btn-cancel" onclick="prioCloseDeleteModal()"><i class="fas fa-times"></i> Annuler</button>
@@ -2216,8 +2571,8 @@ async function loadData() {
         var stAlEl = document.getElementById('st-alertes');
         if (stAlEl) {
             stAlEl.innerText = errCount;
-            stAlEl.style.color = errCount > 0 ? '#4CAF50' : '#2ecc71';
-            document.getElementById('st-alertes-card').style.borderColor = errCount > 0 ? 'rgba(76,175,80,.5)' : 'rgba(46,204,113,.2)';
+            stAlEl.style.color = errCount > 0 ? '#e50914' : '#2ecc71';
+            document.getElementById('st-alertes-card').style.borderColor = errCount > 0 ? 'rgba(229,9,20,.5)' : 'rgba(46,204,113,.2)';
         }
         // Sonnerie si nouvelles erreurs détectées
         if (errCount > 0 && errCount !== (_lastErrCount || 0)) { _playAlarm(errCount); }
@@ -2299,7 +2654,7 @@ async function loadData() {
             tr.innerHTML =
                 '<td style="font-weight:700;color:white;font-family:monospace;letter-spacing:1px;">' + cle + '</td>' +
                 '<td><span class="' + badgeCls + '">' + badgeTxt + '</span></td>' +
-                '<td style="color:' + (expiryDateStr === 'EXPIRÉ' || (!isVie && remaining <= 0) ? '#4CAF50' : '#ccc') + ';font-size:12px;font-weight:600;white-space:nowrap;">' + expiryDateStr + '</td>' +
+                '<td style="color:' + (expiryDateStr === 'EXPIRÉ' || (!isVie && remaining <= 0) ? '#e50914' : '#ccc') + ';font-size:12px;font-weight:600;white-space:nowrap;">' + expiryDateStr + '</td>' +
                 '<td>' + scr + '</td>' +
                 '<td style="color:#666;font-size:12px;">' + devCount + ' / ' + scr + ' connecté(s)</td>' +
                 '<td style="color:#555;font-size:11px;">' + (u.date_activation || '—') + '</td>' +
@@ -2553,7 +2908,7 @@ async function fluxViderCache() {
         btn.innerHTML = '<i class="fas fa-check"></i> Commande envoyée';
         setTimeout(function(){ btn.innerHTML = '<i class="fas fa-broom"></i> Vider cache client'; btn.disabled = false; }, 3000);
     } catch(ex) {
-        toast('❌ Erreur envoi commande', '#4CAF50');
+        toast('❌ Erreur envoi commande', '#e50914');
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-broom"></i> Vider cache client';
     }
 }
@@ -2579,7 +2934,7 @@ async function fluxReparer() {
         closeFluxModal();
         loadData();
     } catch(ex) {
-        toast('❌ Erreur réparation', '#4CAF50');
+        toast('❌ Erreur réparation', '#e50914');
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-wrench"></i> Marquer réparé';
     }
 }
@@ -2596,7 +2951,7 @@ function _diagTypeLabel(t) {
     return { flux:'📡 Flux', connexion:'📶 Connexion', activation:'🔑 Activation', abonnement:'💳 Abonnement', session:'👋 Session', autre:'❓ Autre' }[t] || t;
 }
 function _diagTypeColor(t) {
-    return { flux:'#4CAF50', connexion:'#ff8c00', activation:'#9b59ff', abonnement:'#0af', session:'#2ecc71', autre:'#888' }[t] || '#888';
+    return { flux:'#e50914', connexion:'#ff8c00', activation:'#9b59ff', abonnement:'#0af', session:'#2ecc71', autre:'#888' }[t] || '#888';
 }
 function _diagRelTime(d) {
     var diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
@@ -2604,6 +2959,264 @@ function _diagRelTime(d) {
     if (diffSec < 3600) return Math.floor(diffSec/60) + ' min';
     if (diffSec < 86400) return Math.floor(diffSec/3600) + ' h';
     return Math.floor(diffSec/86400) + ' j';
+}
+
+// ════════════════════════════════════════════════════════════
+// LOG SERVEUR TEMPS RÉEL — lit /admin/server-logs sur le VPS myptvi
+// ════════════════════════════════════════════════════════════
+const SRVLOG_SERVER_URL = 'https://45-61-145-6.sslip.io:3443';
+let _srvLogInterval = null;
+let _srvLogPaused = false;
+let _srvLogData = [];
+
+function srvLogStart() {
+    document.getElementById('srvlog-url-display').textContent = SRVLOG_SERVER_URL + '/admin/server-logs';
+    if (_srvLogInterval) return; // déjà démarré
+    srvLogFetch();
+    _srvLogInterval = setInterval(function () {
+        if (!_srvLogPaused) srvLogFetch();
+    }, 2000);
+}
+
+function srvLogTogglePause() {
+    _srvLogPaused = !_srvLogPaused;
+    const btn = document.getElementById('srvlog-pause-btn');
+    btn.innerHTML = _srvLogPaused
+        ? '<i class="fas fa-play"></i> Reprendre'
+        : '<i class="fas fa-pause"></i> Pause';
+}
+
+async function srvLogFetch() {
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/server-logs');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        _srvLogData = data.logs || [];
+        srvLogRender();
+    } catch (err) {
+        const box = document.getElementById('srvlog-box');
+        if (box && !_srvLogData.length) {
+            box.innerHTML = '<div style="color:#e50914;">Impossible de joindre ' + SRVLOG_SERVER_URL + '/admin/server-logs — ' + err.message + '</div>';
+        }
+    }
+}
+
+// Motifs qui indiquent un échec — mis en évidence en rouge pour repérer
+// immédiatement pourquoi une chaîne ne charge pas, sans lire ligne par ligne.
+const SRVLOG_ERROR_PATTERNS = /error|échec|failed|mismatch|timeout|abort|400|401|404|500|501|502|503|uncaughtException|AssertionError/i;
+
+function srvLogRender() {
+    const box = document.getElementById('srvlog-box');
+    const filterVal = (document.getElementById('srvlog-filter').value || '').toLowerCase();
+    if (!box) return;
+
+    const wasScrolledToBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 40;
+
+    let errorCount = 0;
+    const rows = _srvLogData
+        .filter(function (entry) {
+            if (!filterVal) return true;
+            return (entry.msg || '').toLowerCase().indexOf(filterVal) !== -1;
+        })
+        .map(function (entry) {
+            const isError = entry.level === 'error' || SRVLOG_ERROR_PATTERNS.test(entry.msg || '');
+            if (isError) errorCount++;
+            const time = new Date(entry.t).toLocaleTimeString('fr-FR');
+            const color = isError ? '#ff5c5c' : '#8a8a8a';
+            const escaped = (entry.msg || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return '<div style="color:' + color + ';padding:1px 0;"><span style="color:#444;">[' + time + ']</span> ' + escaped + '</div>';
+        })
+        .join('');
+
+    box.innerHTML = rows || '<div style="color:#444;">Aucune ligne de log pour le moment…</div>';
+    document.getElementById('srvlog-st-total').textContent = _srvLogData.length;
+    document.getElementById('srvlog-st-errors').textContent = errorCount;
+
+    if (wasScrolledToBottom) box.scrollTop = box.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANALYSE & QUARANTAINE DES CHAÎNES — parle directement au système local
+// du VPS (fichier channel-health.json via channel-health-store.js),
+// PAS à Supabase : ce système n'existe que côté serveur myptvi.
+// ═══════════════════════════════════════════════════════════════
+let _qscanPollTimer = null;
+let _qAllChannels = []; // cache local du dernier GET /admin/channel-health (pour la recherche manuelle)
+
+// Doit rester identique au prédicat serveur : channel-health-store.js → isHidden()
+function _qIsHidden(ch) {
+    return ch.status === 'dead' || ch.status === 'quarantined_manual';
+}
+
+async function qLoadQuarantine() {
+    const tbody = document.getElementById('qscan-tbody');
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/channel-health');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        _qAllChannels = data.channels || [];
+
+        // Auto-complétion du champ manuel (nom → l'utilisateur tape, le navigateur suggère)
+        const datalist = document.getElementById('qscan-datalist');
+        if (datalist) {
+            datalist.innerHTML = _qAllChannels.slice(0, 2000).map(function (c) {
+                return '<option value="' + (c.name || '').replace(/"/g, '&quot;') + '">';
+            }).join('');
+        }
+
+        const hidden = _qAllChannels.filter(_qIsHidden);
+        document.getElementById('qscan-st-quarantined').textContent = hidden.length;
+
+        if (!hidden.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#2ecc71;">✅ Aucune chaîne en quarantaine</td></tr>';
+        } else {
+            tbody.innerHTML = hidden.map(function (ch) {
+                const dt = ch.lastCheck ? new Date(ch.lastCheck).toLocaleString('fr-FR') : '—';
+                const badge = ch.status === 'quarantined_manual'
+                    ? '<span style="color:#e50914;">Manuel</span>'
+                    : '<span style="color:#ff8c00;">Auto (' + ch.failCount + ' échecs)</span>';
+                return '<tr style="border-bottom:1px solid #1e1e1e;">' +
+                    '<td style="padding:8px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (ch.id || '').replace(/"/g, '&quot;') + '">' + (ch.name || '(sans nom)') + ' <span style="color:#555;">(' + (ch.country || '?') + ')</span></td>' +
+                    '<td style="padding:8px;color:#ff8c8c;">' + (ch.lastError || '—') + '</td>' +
+                    '<td style="padding:8px;color:#888;">' + dt + '</td>' +
+                    '<td style="padding:8px;">' + badge + '</td>' +
+                    '<td style="padding:8px;"><button onclick="qRemove(\'' + encodeURIComponent(ch.id) + '\',\'' + encodeURIComponent(ch.name || '') + '\')" style="background:#1a2a1a;color:#2ecc71;border:1px solid rgba(46,204,113,.35);padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;"><i class="fas fa-undo"></i> Retirer</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        const p = data.progress;
+        const lastEl = document.getElementById('qscan-st-last');
+        if (p && p.startedAt) {
+            const when = new Date(p.startedAt).toLocaleString('fr-FR');
+            lastEl.textContent = p.running ? when + ' (en cours...)' : when + ' (' + p.done + '/' + p.total + ' testées)';
+        } else {
+            lastEl.textContent = 'jamais';
+        }
+
+        // Si un scan est en cours (déclenché depuis une autre session admin
+        // par ex.), on reprend le suivi automatiquement.
+        if (p && p.running && !_qscanPollTimer) {
+            document.getElementById('qscan-progress').style.display = 'block';
+            document.getElementById('qscan-btn').disabled = true;
+            _qscanPollTimer = setInterval(qPollScanStatus, 2000);
+        }
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:14px;color:#e50914;">Impossible de joindre ' + SRVLOG_SERVER_URL + '/admin/channel-health — ' + e.message + '</td></tr>';
+    }
+}
+
+async function qScanNow() {
+    const btn = document.getElementById('qscan-btn');
+    const prog = document.getElementById('qscan-progress');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Lancement...';
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/channel-health/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.started) {
+            toast('📡 Scan complet lancé en arrière-plan sur le serveur', '#ff8c00');
+        }
+        prog.style.display = 'block';
+        if (_qscanPollTimer) clearInterval(_qscanPollTimer);
+        _qscanPollTimer = setInterval(qPollScanStatus, 2000);
+        qPollScanStatus();
+    } catch (e) {
+        toast('❌ Impossible de joindre ' + SRVLOG_SERVER_URL + '/admin/channel-health/check — ' + e.message, '#ff6b6b');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-satellite-dish"></i> Scanner maintenant';
+    }
+}
+
+async function qPollScanStatus() {
+    const btn = document.getElementById('qscan-btn');
+    const prog = document.getElementById('qscan-progress');
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/channel-health');
+        const data = await res.json();
+        const p = data.progress || {};
+        if (p.running) {
+            prog.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scan en cours — ' + p.done + ' / ' + p.total + ' chaînes testées';
+        } else {
+            prog.innerHTML = p.finishedAt
+                ? '✅ Scan terminé — ' + p.done + '/' + p.total + ' testées'
+                : 'Aucun scan en cours';
+            clearInterval(_qscanPollTimer);
+            _qscanPollTimer = null;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-satellite-dish"></i> Scanner maintenant';
+            qLoadQuarantine();
+        }
+    } catch (e) {
+        prog.innerHTML = '<span style="color:#e50914;">Erreur suivi scan : ' + e.message + '</span>';
+        clearInterval(_qscanPollTimer);
+        _qscanPollTimer = null;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-satellite-dish"></i> Scanner maintenant';
+    }
+}
+
+async function qRemove(encodedId, encodedName) {
+    const channelId   = decodeURIComponent(encodedId);
+    const channelName = decodeURIComponent(encodedName || '');
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/channel-health/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelId, channelName })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('✅ Retirée de la quarantaine', '#2ecc71');
+        qLoadQuarantine();
+    } catch (e) {
+        toast('❌ Erreur : ' + e.message, '#ff6b6b');
+    }
+}
+
+// Recherche par nom OU par ID exact dans le dernier catalogue chargé
+// (_qAllChannels, rempli par qLoadQuarantine) — évite d'avoir à connaître
+// l'ID technique de la chaîne pour la mettre en quarantaine à la main.
+function _qFindChannel(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    return _qAllChannels.find(function (c) { return String(c.id).toLowerCase() === q; })
+        || _qAllChannels.find(function (c) { return (c.name || '').toLowerCase() === q; })
+        || _qAllChannels.find(function (c) { return (c.name || '').toLowerCase().indexOf(q) !== -1; });
+}
+
+async function qAddManual() {
+    const urlInput  = document.getElementById('qscan-manual-url'); // champ réutilisé : nom OU id de chaîne
+    const query = urlInput.value.trim();
+    if (!query) { toast('⚠️ Entrez un nom ou un ID de chaîne', '#ff8c00'); return; }
+
+    if (!_qAllChannels.length) {
+        // Catalogue pas encore chargé (onglet jamais ouvert) — on le charge d'abord
+        await qLoadQuarantine();
+    }
+    const found = _qFindChannel(query);
+    if (!found) {
+        toast('❌ Aucune chaîne trouvée pour "' + query + '" — essayez le nom exact ou l\'ID', '#ff6b6b');
+        return;
+    }
+
+    try {
+        const res = await fetch(SRVLOG_SERVER_URL + '/admin/channel-health/quarantine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channelId: found.id, channelName: found.name })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        toast('🚫 "' + found.name + '" mise en quarantaine', '#2ecc71');
+        urlInput.value = '';
+        qLoadQuarantine();
+    } catch (e) {
+        toast('❌ Erreur : ' + e.message, '#ff6b6b');
+    }
 }
 
 async function loadDiagnostics() {
@@ -2641,7 +3254,7 @@ async function loadDiagnostics() {
         }
         _diagLastOpenCount = nonResolusHorsSession;
     } catch(ex) {
-        tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;color:#4CAF50;text-align:center;">Erreur chargement — vérifiez que la table diagnostic_logs existe (voir SQL plus bas).</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;color:#e50914;text-align:center;">Erreur chargement — vérifiez que la table diagnostic_logs existe (voir SQL plus bas).</td></tr>';
     }
 
     // Auto-actualisation tant que l'onglet est actif et la case cochée
@@ -2674,7 +3287,7 @@ function _devstEtatLabel(r) {
     if (!r.updated_at || (Date.now() - new Date(r.updated_at).getTime()) > 60000) return '<span style="color:#666;">⚪ Hors ligne</span>';
     if (r.en_lecture) return '<span style="color:#2ecc71;">▶ Lecture</span>';
     if (r.etat_lecture === 'buffering') return '<span style="color:#ff8c00;">⏳ Mise en tampon</span>';
-    if (r.etat_lecture === 'erreur') return '<span style="color:#4CAF50;">⚠ Erreur</span>';
+    if (r.etat_lecture === 'erreur') return '<span style="color:#e50914;">⚠ Erreur</span>';
     if (r.etat_lecture === 'pause') return '<span style="color:#0af;">⏸ Pause</span>';
     return '<span style="color:#666;">■ Arrêt</span>';
 }
@@ -2686,7 +3299,7 @@ async function loadDeviceStatuses() {
         _devstRows = rows || [];
         _devstRenderTable(_devstRows);
     } catch(ex) {
-        tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;color:#4CAF50;text-align:center;">Erreur chargement — vérifiez que la table device_status existe (voir SQL plus bas).</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;color:#e50914;text-align:center;">Erreur chargement — vérifiez que la table device_status existe (voir SQL plus bas).</td></tr>';
     }
     clearTimeout(_devstAutoTimer);
     var diagSection = document.getElementById('diagnostic-section');
@@ -2722,14 +3335,14 @@ function _devstRenderTable(rows) {
                 '<button onclick="openLiveView(\'' + did + '\')" title="Voir l\'écran en direct" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#0af;"><i class="fas fa-eye"></i></button>' +
                 '<button onclick="openChannelHistory(\'' + did + '\')" title="Historique des chaînes" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#ff8c00;"><i class="fas fa-clock-rotate-left"></i></button>' +
                 '<button onclick="sendDeviceCommand(\'' + did + '\',\'restart_player\')" title="Redémarrer le lecteur" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#2ecc71;"><i class="fas fa-rotate"></i></button>' +
-                '<button onclick="sendDeviceCommand(\'' + did + '\',\'clear_cache\')" title="Vider le cache" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#4CAF50;"><i class="fas fa-broom"></i></button>' +
+                '<button onclick="sendDeviceCommand(\'' + did + '\',\'clear_cache\')" title="Vider le cache" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#e50914;"><i class="fas fa-broom"></i></button>' +
                 '<button onclick="sendDeviceCommand(\'' + did + '\',\'reload_sources\')" title="Recharger l\'application" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#9b59ff;"><i class="fas fa-arrows-rotate"></i></button>' +
                 '<button onclick="openTestStream(\'' + did + '\')" title="Tester un flux précis sur cet appareil / inverser le serveur" style="background:#1a1a1a;border:1px solid #333;padding:5px 8px;border-radius:5px;margin-right:4px;color:#ffd700;"><i class="fas fa-vial"></i></button>' +
                 '<button onclick="dipOpen(\'' + did + '\',\'' + esc(r.cle||'') + '\')" title="Infos système & intervention à distance" style="background:#1a1a1a;border:1px solid #ff8c00;padding:5px 8px;border-radius:5px;color:#ff8c00;"><i class="fas fa-satellite-dish"></i></button>' +
                 (r.mode_serveur ? '<button onclick="stopTestStream(\'' + did + '\')" title="Faire revenir à la normale (quitter le mode test serveur)" style="background:#1a1a1a;border:1px solid #ff8c00;padding:5px 8px;border-radius:5px;margin-left:4px;color:#ff8c00;"><i class="fas fa-undo"></i></button>' : '') +
             '</td>' +
         '</tr>' +
-        (r.test_resultat ? '<tr style="border-top:1px dashed #222;"><td colspan="8" style="padding:6px 9px;font-size:11px;color:' + (r.test_resultat==='succes'?'#2ecc71':'#4CAF50') + ';">' +
+        (r.test_resultat ? '<tr style="border-top:1px dashed #222;"><td colspan="8" style="padding:6px 9px;font-size:11px;color:' + (r.test_resultat==='succes'?'#2ecc71':'#e50914') + ';">' +
             (r.mode_serveur ? '<span style="background:#ff8c00;color:#000;border-radius:8px;padding:1px 8px;font-weight:700;margin-right:6px;">🔁 MODE SERVEUR ACTIF</span>' : '') +
             (r.test_resultat==='succes' ? '✅ Dernier test : lecture réussie côté client' : '❌ Dernier test : échec côté client') +
             ' — ' + esc(r.test_message||'') + (r.test_url ? ' <span style="color:#555;">(' + esc(r.test_url.substring(0,60)) + ')</span>' : '') +
@@ -2743,7 +3356,7 @@ async function sendDeviceCommand(deviceId, cmd) {
         toast('📡 Commande envoyée', '#2ecc71');
     } catch(e) {
         console.error('[sendDeviceCommand]', e);
-        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2780,7 +3393,7 @@ async function dipLoadSysInfo() {
             return '<div style="background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:8px;"><div style="color:#888;font-size:10px;">'+f[0]+'</div><div style="color:#fff;font-weight:bold;">'+f[1]+'</div></div>';
         }).join('');
     } catch(e) {
-        document.getElementById('dip-sysinfo').innerHTML = '<div style="grid-column:1/-1;color:#4CAF50;font-size:11px;">Erreur chargement infos système — voir SQL requis ci-dessous.</div>';
+        document.getElementById('dip-sysinfo').innerHTML = '<div style="grid-column:1/-1;color:#e50914;font-size:11px;">Erreur chargement infos système — voir SQL requis ci-dessous.</div>';
     }
 }
 
@@ -2789,11 +3402,11 @@ async function dipLoadLogs() {
     try {
         var rows = await sbGet('device_app_logs', 'select=*&device_id=eq.' + encodeURIComponent(_dipDeviceId) + '&order=created_at.desc&limit=50');
         tb.innerHTML = (rows||[]).map(function(r){
-            var color = r.niveau==='error' ? '#4CAF50' : (r.niveau==='warn' ? '#ff8c00' : '#888');
+            var color = r.niveau==='error' ? '#e50914' : (r.niveau==='warn' ? '#ff8c00' : '#888');
             return '<tr><td style="padding:3px 6px;color:'+color+';white-space:nowrap;">'+new Date(r.created_at).toLocaleTimeString()+'</td><td style="padding:3px 6px;color:'+color+';">['+esc(r.source||'')+']</td><td style="padding:3px 6px;">'+esc(r.message||'')+'</td></tr>';
         }).join('') || '<tr><td style="padding:10px;color:#666;">Aucun log</td></tr>';
     } catch(e) {
-        tb.innerHTML = '<tr><td style="padding:10px;color:#4CAF50;">Table device_app_logs introuvable — voir SQL requis ci-dessous.</td></tr>';
+        tb.innerHTML = '<tr><td style="padding:10px;color:#e50914;">Table device_app_logs introuvable — voir SQL requis ci-dessous.</td></tr>';
     }
 }
 
@@ -2805,7 +3418,7 @@ async function dipLoadInterventions() {
             return '<tr><td style="padding:3px 6px;white-space:nowrap;">'+new Date(r.created_at).toLocaleTimeString()+'</td><td style="padding:3px 6px;">'+esc(r.action)+'</td><td style="padding:3px 6px;">'+esc(r.statut)+'</td></tr>';
         }).join('') || '<tr><td style="padding:10px;color:#666;">Aucune intervention</td></tr>';
     } catch(e) {
-        tb.innerHTML = '<tr><td style="padding:10px;color:#4CAF50;">Table device_interventions introuvable — voir SQL requis ci-dessous.</td></tr>';
+        tb.innerHTML = '<tr><td style="padding:10px;color:#e50914;">Table device_interventions introuvable — voir SQL requis ci-dessous.</td></tr>';
     }
 }
 
@@ -2817,7 +3430,7 @@ async function dipSendAction(action) {
         toast('📡 Commande envoyée', '#2ecc71');
         setTimeout(function(){ dipLoadSysInfo(); dipLoadLogs(); dipLoadInterventions(); }, 3000);
     } catch(e) {
-        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2827,7 +3440,7 @@ async function dipSendAction(action) {
 async function pnCreate() {
     var titre = document.getElementById('pn-titre').value.trim();
     var heure = document.getElementById('pn-heure').value;
-    if (!titre || !heure) { toast('Titre et heure requis', '#4CAF50'); return; }
+    if (!titre || !heure) { toast('Titre et heure requis', '#e50914'); return; }
     try {
         await sbInsert('programmes_notifications', {
             titre: titre,
@@ -2845,7 +3458,7 @@ async function pnCreate() {
         toast('🔔 Notification programmée', '#00c896');
         loadProgrammesNotifs();
     } catch(e) {
-        toast('Erreur : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2862,11 +3475,11 @@ async function loadProgrammesNotifs() {
                 + '<td>'+new Date(r.heure_debut).toLocaleString()+'</td>'
                 + '<td>'+r.minutes_avant+' min</td>'
                 + '<td>'+statut+'</td>'
-                + '<td>'+(r.envoyee ? '' : '<button onclick="pnDelete('+r.id+')" style="background:#5a1a1a;border:1px solid #4CAF50;color:#fff;padding:4px 10px;border-radius:4px;font-size:11px;">Supprimer</button>')+'</td>'
+                + '<td>'+(r.envoyee ? '' : '<button onclick="pnDelete('+r.id+')" style="background:#5a1a1a;border:1px solid #e50914;color:#fff;padding:4px 10px;border-radius:4px;font-size:11px;">Supprimer</button>')+'</td>'
                 + '</tr>';
         }).join('') || '<tr><td colspan="7" style="padding:14px;color:#666;text-align:center;">Aucune notification programmée</td></tr>';
     } catch(e) {
-        tb.innerHTML = '<tr><td colspan="7" style="padding:20px;color:#4CAF50;text-align:center;">Erreur chargement — vérifiez que la table programmes_notifications existe (voir SQL ci-dessus).</td></tr>';
+        tb.innerHTML = '<tr><td colspan="7" style="padding:20px;color:#e50914;text-align:center;">Erreur chargement — vérifiez que la table programmes_notifications existe (voir SQL ci-dessus).</td></tr>';
     }
 }
 
@@ -2877,7 +3490,7 @@ async function pnDelete(id) {
         toast('Notification supprimée', '#2ecc71');
         loadProgrammesNotifs();
     } catch(e) {
-        toast('Erreur suppression : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur suppression : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2896,7 +3509,7 @@ async function openTestStream(deviceId) {
         setTimeout(loadDeviceStatuses, 12000);
     } catch(e) {
         console.error('[openTestStream]', e);
-        toast('Erreur envoi test : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur envoi test : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2909,7 +3522,7 @@ async function stopTestStream(deviceId) {
         setTimeout(loadDeviceStatuses, 3000);
     } catch(e) {
         console.error('[stopTestStream]', e);
-        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#4CAF50');
+        toast('Erreur envoi commande : ' + (e && e.message ? e.message.substring(0,120) : 'inconnue'), '#e50914');
     }
 }
 
@@ -2932,7 +3545,7 @@ async function openChannelHistory(deviceId) {
             '</div>';
         }).join('');
     } catch(e) {
-        document.getElementById('devhist-body').innerHTML = '<p style="color:#4CAF50;text-align:center;padding:20px;">Erreur — vérifiez que la table channel_history existe.</p>';
+        document.getElementById('devhist-body').innerHTML = '<p style="color:#e50914;text-align:center;padding:20px;">Erreur — vérifiez que la table channel_history existe.</p>';
     }
 }
 function closeChannelHistory() {
@@ -2966,7 +3579,7 @@ async function _liveViewPoll() {
             var age = r.updated_at ? Math.round((Date.now() - new Date(r.updated_at).getTime())/1000) : '?';
             document.getElementById('liveview-status').innerText = r.actif ? ('En direct · image il y a ' + age + 's') : 'Capture arrêtée côté client';
         } else {
-            document.getElementById('liveview-status').innerText = 'En attente de la première image du client... (vérifie que le CLIENT utilise bien le fichier myvoxtv_avec_blocage.html mis à jour)';
+            document.getElementById('liveview-status').innerText = 'En attente de la première image du client... (vérifie que le CLIENT utilise bien le fichier myboxsmart_avec_blocage.html mis à jour)';
         }
     } catch(e) {
         console.error('[_liveViewPoll]', e);
@@ -3059,7 +3672,7 @@ async function _diagMarkResolved() {
         closeDiagModal();
         loadDiagnostics();
     } catch(ex) {
-        toast('❌ Erreur mise à jour', '#4CAF50');
+        toast('❌ Erreur mise à jour', '#e50914');
     }
 }
 
@@ -3174,14 +3787,14 @@ async function rcCheckPairCode() {
     box.style.display = 'none';
     infoEl.textContent = '';
 
-    if (!code) { toast('❌ Entrez le code affiché sur la TV', '#4CAF50'); return; }
+    if (!code) { toast('❌ Entrez le code affiché sur la TV', '#e50914'); return; }
 
     infoEl.textContent = 'Recherche...';
     try {
         const rows = await sbGet('rc_status', 'pair_code=eq.' + encodeURIComponent(code) + '&select=device_id,online,last_seen&order=last_seen.desc&limit=1');
         if (!rows || !rows.length) {
             infoEl.textContent = '';
-            toast('❌ Aucune TV trouvée avec ce code (a-t-il expiré ?)', '#4CAF50');
+            toast('❌ Aucune TV trouvée avec ce code (a-t-il expiré ?)', '#e50914');
             return;
         }
         const row = rows[0];
@@ -3204,7 +3817,7 @@ async function rcCheckPairCode() {
 }
 
 async function rcActivateRemote() {
-    if (!_rcPairedDeviceId) { toast('❌ Vérifiez d\'abord le code télécommande', '#4CAF50'); return; }
+    if (!_rcPairedDeviceId) { toast('❌ Vérifiez d\'abord le code télécommande', '#e50914'); return; }
 
     const statusEl   = document.getElementById('rc-pair-status');
     const existingKey= document.getElementById('rc-existing-key').value.trim().toUpperCase();
@@ -3269,7 +3882,7 @@ async function rcActivateRemote() {
 // =====================================================
 // ACHAT & ACTIVATION À DISTANCE AVEC PAIEMENT CLIENT
 // Reprend EXACTEMENT les 3 passerelles utilisées côté app client
-// (SebPay via sebpay-proxy, FedaPay, FeexPay) — voir myvoxtv_avec_blocage.html
+// (SebPay via sebpay-proxy, FedaPay, FeexPay) — voir myboxsmart_avec_blocage.html
 // (code télécommande -> paiement Mobile Money -> confirmation
 //  du client -> abonnement créé + TV appairée automatiquement)
 // =====================================================
@@ -3426,14 +4039,14 @@ async function rcpCheckCode() {
     box.style.display = 'none';
     infoEl.textContent = '';
 
-    if (!code) { toast('❌ Entrez le code envoyé par le client', '#4CAF50'); return; }
+    if (!code) { toast('❌ Entrez le code envoyé par le client', '#e50914'); return; }
 
     infoEl.textContent = 'Recherche...';
     try {
         const rows = await sbGet('rc_status', 'pair_code=eq.' + encodeURIComponent(code) + '&select=device_id,online,last_seen&order=last_seen.desc&limit=1');
         if (!rows || !rows.length) {
             infoEl.textContent = '';
-            toast('❌ Aucune TV trouvée avec ce code (a-t-il expiré ?)', '#4CAF50');
+            toast('❌ Aucune TV trouvée avec ce code (a-t-il expiré ?)', '#e50914');
             return;
         }
         const row   = rows[0];
@@ -3475,7 +4088,7 @@ function _rcpKeyOrRandom(k) {
 }
 
 async function rcpLaunchPayment() {
-    if (!_rcpDeviceId) { toast('❌ Vérifiez d\'abord le code télécommande', '#4CAF50'); return; }
+    if (!_rcpDeviceId) { toast('❌ Vérifiez d\'abord le code télécommande', '#e50914'); return; }
 
     const mode    = document.getElementById('rcp-mode').value;
     const days    = document.getElementById('rcp-days').value;
@@ -3485,8 +4098,8 @@ async function rcpLaunchPayment() {
                         ? document.getElementById('rcp-existing-key').value.trim().toUpperCase()
                         : document.getElementById('rcp-new-key').value.trim().toUpperCase();
 
-    if (mode === 'existing' && !key) { toast('❌ Indiquez l\'ID de l\'abonnement à recharger', '#4CAF50'); return; }
-    if (!prix || prix <= 0)          { toast('❌ Indiquez le montant à payer', '#4CAF50'); return; }
+    if (mode === 'existing' && !key) { toast('❌ Indiquez l\'ID de l\'abonnement à recharger', '#e50914'); return; }
+    if (!prix || prix <= 0)          { toast('❌ Indiquez le montant à payer', '#e50914'); return; }
     key = _rcpKeyOrRandom(key);
 
     const statusBox  = document.getElementById('rcp-status-box');
@@ -3558,7 +4171,7 @@ async function rcpLaunchSebpay(key, days, screens, mode, prixXOF) {
 
     if (initJson.data.provider_link) {
         document.getElementById('rcp-link-row').style.display = 'block';
-        document.getElementById('rcp-wa-link').href = 'https://wa.me/?text=' + encodeURIComponent('Cliquez ici pour valider votre paiement Prime TV : ' + initJson.data.provider_link);
+        document.getElementById('rcp-wa-link').href = 'https://wa.me/?text=' + encodeURIComponent('Cliquez ici pour valider votre paiement My Box Smart : ' + initJson.data.provider_link);
     }
 
     let attempts = 0;
@@ -3598,10 +4211,10 @@ async function rcpLaunchWidgetProvider(key, days, screens, mode, prix) {
     const provLabel = (_rcpProvider === 'fedapay') ? 'FedaPay' : 'FeexPay';
 
     statusLine.style.color = '#0af';
-    statusLine.innerHTML   = '📲 Demandez au client d\'ouvrir son app Prime TV et de payer avec ' + provLabel + '.';
+    statusLine.innerHTML   = '📲 Demandez au client d\'ouvrir son app My Box Smart et de payer avec ' + provLabel + '.';
 
     const waMsg = encodeURIComponent(
-        'Bonjour, pour activer votre abonnement Prime TV (' + days + ' j / ' + screens + ' écran(s), ' + prix + ' FCFA), ' +
+        'Bonjour, pour activer votre abonnement My Box Smart (' + days + ' j / ' + screens + ' écran(s), ' + prix + ' FCFA), ' +
         'ouvrez l\'application, choisissez votre offre puis payez avec ' + provLabel + '. ' +
         'Votre ID abonnement est : ' + key
     );
@@ -3960,7 +4573,7 @@ function openTarifModal(tarif) {
     document.getElementById('tf-prix').value          = tarif ? tarif.prix         : '';
     document.getElementById('tf-prix-promo').value    = tarif && tarif.prix_promo  ? tarif.prix_promo : '';
     document.getElementById('tf-badge').value         = tarif ? (tarif.badge || '') : '';
-    const color = (tarif && tarif.badge_color) ? tarif.badge_color : '#4CAF50';
+    const color = (tarif && tarif.badge_color) ? tarif.badge_color : '#e50914';
     document.getElementById('tf-badge-color').value   = color;
     document.getElementById('tf-badge-color-text').value = color;
     document.getElementById('tf-ordre').value         = tarif ? tarif.ordre        : '10';
@@ -3989,7 +4602,7 @@ async function saveTarif() {
     const promoRaw   = document.getElementById('tf-prix-promo').value.trim();
     const prix_promo = promoRaw ? parseInt(promoRaw) : null;
     const badge      = document.getElementById('tf-badge').value.trim() || null;
-    const badge_color= document.getElementById('tf-badge-color-text').value.trim() || '#4CAF50';
+    const badge_color= document.getElementById('tf-badge-color-text').value.trim() || '#e50914';
     const ordre      = parseInt(document.getElementById('tf-ordre').value) || 10;
     const actif      = document.getElementById('tf-actif').checked;
 
@@ -4036,7 +4649,7 @@ async function checkXtreamExpiry() {
     var user = document.getElementById('xt-check-user').value.trim();
     var pass = document.getElementById('xt-check-pass').value.trim();
     var out  = document.getElementById('xt-check-result');
-    if (!host || !user || !pass) { toast('❌ Host / utilisateur / mot de passe requis', '#4CAF50'); return; }
+    if (!host || !user || !pass) { toast('❌ Host / utilisateur / mot de passe requis', '#e50914'); return; }
     out.innerHTML = '<span style="color:#888;"><i class="fas fa-spinner fa-spin"></i> Vérification en cours...</span>';
     var url = host + '/player_api.php?username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass);
     // Le panel Xtream ne renvoie généralement pas d'en-têtes CORS, donc un
@@ -4064,7 +4677,7 @@ async function checkXtreamExpiry() {
         }
     }
     // Toutes les tentatives ont échoué
-    out.innerHTML = '<span style="color:#4CAF50;">❌ Impossible de joindre le panel après plusieurs tentatives (' + esc(lastError ? lastError.message : '') + ').' +
+    out.innerHTML = '<span style="color:#e50914;">❌ Impossible de joindre le panel après plusieurs tentatives (' + esc(lastError ? lastError.message : '') + ').' +
         '<br><br>👉 Ouvrez l\'URL directement dans un nouvel onglet pour voir la réponse brute : <a href="' + url.replace(/"/g,'') + '" target="_blank" style="color:#0af;">' + url.replace(/</g,'&lt;') + '</a></span>';
 }
 
@@ -4084,9 +4697,9 @@ function _renderXtreamExpiryResult(out, user, host, info) {
         expStr = expDate.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) +
                  ' à ' + expDate.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
         var remainingDays = Math.ceil((expDate.getTime() - Date.now()) / 86400000);
-        expColor = remainingDays <= 0 ? '#4CAF50' : (remainingDays <= 7 ? '#ff8c00' : '#2ecc71');
+        expColor = remainingDays <= 0 ? '#e50914' : (remainingDays <= 7 ? '#ff8c00' : '#2ecc71');
         remainStr = remainingDays <= 0
-            ? ' <b style="color:#4CAF50;">(EXPIRÉ)</b>'
+            ? ' <b style="color:#e50914;">(EXPIRÉ)</b>'
             : ' <b style="color:' + expColor + ';">(' + remainingDays + ' j restant' + (remainingDays > 1 ? 's' : '') + ')</b>';
     }
     var createdStr = createdTs && !isNaN(createdTs)
@@ -4119,7 +4732,7 @@ function renderTarifs() {
         var card = document.createElement('div');
         card.className = 'tarif-card' + (t.actif ? '' : ' inactive');
         var html = '';
-        if (hasBadge) html += '<span class="card-badge" style="background:' + esc(t.badge_color||'#4CAF50') + ';">' + esc(t.badge) + '</span>';
+        if (hasBadge) html += '<span class="card-badge" style="background:' + esc(t.badge_color||'#e50914') + ';">' + esc(t.badge) + '</span>';
         html += '<div style="font-size:12px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">' + esc(t.label_ecran) + ' — ' + esc(t.label_duree) + '</div>';
         if (hasPromo) html += '<div class="card-price-old">' + Number(t.prix).toLocaleString('fr') + ' FCFA</div>';
         html += '<div class="card-price">' + Number(priceShow).toLocaleString('fr') + ' <span style="font-size:14px;color:#888;">FCFA</span></div>';
@@ -4140,7 +4753,7 @@ function renderTarifs() {
         var hasPromo = t.prix_promo !== null && t.prix_promo !== undefined;
         var tr = document.createElement('tr');
         var badgeCell = t.badge
-            ? '<span style="background:' + esc(t.badge_color||'#4CAF50') + ';padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">' + esc(t.badge) + '</span>'
+            ? '<span style="background:' + esc(t.badge_color||'#e50914') + ';padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;">' + esc(t.badge) + '</span>'
             : '<span style="color:#444">—</span>';
         tr.innerHTML =
             '<td style="color:#555;font-size:12px;">' + t.id + '</td>' +
@@ -4148,7 +4761,7 @@ function renderTarifs() {
             '<td>' + t.screens + '</td>' +
             '<td>' + t.days + '</td>' +
             '<td style="font-weight:700;color:#fff;">' + Number(t.prix).toLocaleString('fr') + ' FCFA</td>' +
-            '<td style="color:#4CAF50;">' + (hasPromo ? Number(t.prix_promo).toLocaleString('fr') + ' FCFA' : '<span style="color:#444">—</span>') + '</td>' +
+            '<td style="color:#e50914;">' + (hasPromo ? Number(t.prix_promo).toLocaleString('fr') + ' FCFA' : '<span style="color:#444">—</span>') + '</td>' +
             '<td>' + badgeCell + '</td>' +
             '<td style="color:#666;">' + t.ordre + '</td>' +
             '<td><span style="color:' + (t.actif?'#2ecc71':'#ff4444') + ';font-weight:700;font-size:12px;">' + (t.actif?'✅ OUI':'⛔ NON') + '</span></td>' +
@@ -4187,16 +4800,16 @@ function generatePDF(key, days, screens) {
 
     doc.setFillColor(20, 20, 20); doc.rect(0, 0, 210, 42, 'F');
     doc.setTextColor(255,255,255); doc.setFontSize(28); doc.setFont("helvetica","bold");
-    doc.text("PRIME TV", 105, 20, { align: "center" });
-    doc.setFontSize(12); doc.setTextColor(76,175,80);
+    doc.text("MY BOX TV", 105, 20, { align: "center" });
+    doc.setFontSize(12); doc.setTextColor(229,9,20);
     doc.text("CERTIFICAT D'ABONNEMENT", 105, 31, { align: "center" });
     doc.setFontSize(9); doc.setTextColor(150,150,150);
     doc.text("Émis le " + dateStr, 105, 39, { align: "center" });
 
     doc.setTextColor(0,0,0); doc.setFontSize(14); doc.setFont("helvetica","normal");
     doc.text("VOTRE ID DE CONNEXION :", 105, 60, { align: "center" });
-    doc.setFillColor(240,240,240); doc.setDrawColor(76,175,80); doc.setLineWidth(1.5); doc.rect(35, 65, 140, 27, 'FD');
-    doc.setFont("courier","bold"); doc.setFontSize(30); doc.setTextColor(76,175,80);
+    doc.setFillColor(240,240,240); doc.setDrawColor(229,9,20); doc.setLineWidth(1.5); doc.rect(35, 65, 140, 27, 'FD');
+    doc.setFont("courier","bold"); doc.setFontSize(30); doc.setTextColor(229,9,20);
     doc.text(key, 105, 83, { align: "center" });
 
     doc.setFont("helvetica","normal"); doc.setTextColor(0,0,0); doc.setFontSize(12); doc.setLineWidth(0.1);
@@ -4207,7 +4820,7 @@ function generatePDF(key, days, screens) {
     doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.text("INSTRUCTIONS D'ACCÈS", 20, 128);
     doc.setFontSize(11); doc.setFont("helvetica","normal");
     doc.text("1. Connectez votre appareil à Internet.", 22, 140);
-    doc.text("2. Ouvrez l'application PRIME TV.", 22, 150);
+    doc.text("2. Ouvrez l'application MY BOX TV.", 22, 150);
     doc.text("3. Entrez votre ID ci-dessus dans le champ de connexion.", 22, 160);
     doc.text("4. Profitez de +14.000 chaînes en HD/4K !", 22, 170);
     doc.line(20, 180, 190, 180);
@@ -4216,7 +4829,7 @@ function generatePDF(key, days, screens) {
     doc.text("Conservez précieusement cet ID. Ne le partagez pas. Valide sur " + screens + " appareil(s) simultané(s).", 105, 190, { align: "center" });
 
     doc.setFillColor(245,245,245); doc.rect(0, 255, 210, 45, 'F');
-    doc.setTextColor(76,175,80); doc.setFontSize(12); doc.setFont("helvetica","bold");
+    doc.setTextColor(229,9,20); doc.setFontSize(12); doc.setFont("helvetica","bold");
     doc.text("SUPPORT TECHNIQUE — WHATSAPP", 105, 268, { align: "center" });
     doc.setTextColor(0,0,0); doc.setFont("helvetica","normal"); doc.setFontSize(14);
     doc.text("63 82 87 67", 105, 280, { align: "center" });
@@ -4233,7 +4846,7 @@ function onCodeChange() {
     const kb    = (new Blob([code]).size / 1024).toFixed(1);
     document.getElementById('code-lines').innerText = lines.toLocaleString() + ' lignes';
     document.getElementById('code-size').innerText  = kb + ' Ko';
-    document.getElementById('code-size').style.color = kb < 50 ? '#ffd700' : kb > 5000 ? '#4CAF50' : '#2ecc71';
+    document.getElementById('code-size').style.color = kb < 50 ? '#ffd700' : kb > 5000 ? '#e50914' : '#2ecc71';
     // Auto-version
     if (!document.getElementById('new-version').value.trim()) {
         const n = new Date();
@@ -4334,7 +4947,7 @@ async function loadHistory() {
             container.appendChild(div);
         });
     } catch(e) {
-        container.innerHTML = '<div style="text-align:center;color:#4CAF50;padding:14px;font-size:12px;">Erreur : ' + e.message + '</div>';
+        container.innerHTML = '<div style="text-align:center;color:#e50914;padding:14px;font-size:12px;">Erreur : ' + e.message + '</div>';
     }
 }
 
@@ -5068,7 +5681,7 @@ async function prioLoadData() {
         prioUpdateStats();
     } catch(e) {
         _prioLoaded = false; // ✅ permettre retry si erreur réseau
-        document.getElementById('prio-left-list').innerHTML = '<div class="prio-drop-hint"><i class="fas fa-times-circle" style="color:#4CAF50;"></i><p>Erreur : ' + _prioEsc(e.message) + '<br><br><button class="prio-btn prio-btn-gray" onclick="_prioLoaded=false;prioLoadData()"><i class="fas fa-sync-alt"></i> Réessayer</button></p></div>';
+        document.getElementById('prio-left-list').innerHTML = '<div class="prio-drop-hint"><i class="fas fa-times-circle" style="color:#e50914;"></i><p>Erreur : ' + _prioEsc(e.message) + '<br><br><button class="prio-btn prio-btn-gray" onclick="_prioLoaded=false;prioLoadData()"><i class="fas fa-sync-alt"></i> Réessayer</button></p></div>';
     }
 }
 
@@ -5102,9 +5715,11 @@ function prioToggleRightSort() {
 function prioFilterLeft() {
     const term = (document.getElementById('prio-search-input').value || '').toLowerCase().trim();
     const cat  = document.getElementById('prio-cat-filter').value;
+    const linkTerm = (_prioLinkFilter || '').toLowerCase().trim();
     const prioSet = new Set(prioURLs); // ✅ Set O(1) au lieu de includes() O(n)
     prioLeftFiltered = prioAllChannels.filter(function(ch) {
-        return !prioSet.has(ch.url) && (!cat || ch.category === cat) && (!term || ch.name.toLowerCase().includes(term));
+        return !prioSet.has(ch.url) && (!cat || ch.category === cat) && (!term || ch.name.toLowerCase().includes(term))
+            && (!linkTerm || (ch.url || '').toLowerCase().includes(linkTerm));
     });
     // Tri colonne gauche
     if (_prioLeftSortAZ === true)  prioLeftFiltered = prioLeftFiltered.slice().sort(function(a,b){ return a.name.localeCompare(b.name,'fr',{sensitivity:'base'}); });
@@ -5500,7 +6115,7 @@ function prioTestChannel(ch) {
     prioPSetStatus('⏳', '');
     const overlay = document.getElementById('prio-player-overlay');
     overlay.classList.remove('hidden');
-    overlay.innerHTML = '<i class="fas fa-spinner" style="font-size:22px;color:#4CAF50;animation:spin .7s linear infinite;"></i><p style="font-size:11px;color:#555;margin-top:6px;">Connexion...</p>';
+    overlay.innerHTML = '<i class="fas fa-spinner" style="font-size:22px;color:#e50914;animation:spin .7s linear infinite;"></i><p style="font-size:11px;color:#555;margin-top:6px;">Connexion...</p>';
     overlay.onclick = null;
     const video = document.getElementById('prio-test-video');
     video.volume = document.getElementById('prio-vol-range').value / 100;
@@ -5509,7 +6124,7 @@ function prioTestChannel(ch) {
     function _prioShowError(msg) {
         prioPSetStatus('❌ Erreur', 'err');
         overlay.classList.remove('hidden');
-        overlay.innerHTML = '<i class="fas fa-times-circle" style="color:#4CAF50;font-size:22px;"></i><p style="font-size:11px;color:#555;margin-top:6px;">' + (msg || 'Flux indisponible') + '</p>';
+        overlay.innerHTML = '<i class="fas fa-times-circle" style="color:#e50914;font-size:22px;"></i><p style="font-size:11px;color:#555;margin-top:6px;">' + (msg || 'Flux indisponible') + '</p>';
     }
     function _prioOnPlaySuccess() { overlay.classList.add('hidden'); prioPSetStatus('🔴 EN DIRECT', 'live'); }
     function _prioOnPlayBlocked() {
@@ -5632,7 +6247,7 @@ function prioStopPlayer(resetTitle = true) {
 
 function prioPSetStatus(msg, cls) { const el = document.getElementById('prio-mini-player-status'); el.innerText = msg; el.className = cls || ''; }
 function prioSetVol(v) { document.getElementById('prio-test-video').volume = v/100; document.getElementById('prio-vol-pct').innerText = v + '%'; }
-function prioToggleMute() { _prioMuted = !_prioMuted; document.getElementById('prio-test-video').muted = _prioMuted; document.getElementById('prio-btn-mute').innerHTML = _prioMuted ? '<i class="fas fa-volume-mute" style="color:#4CAF50;"></i>' : '<i class="fas fa-volume-mute"></i>'; }
+function prioToggleMute() { _prioMuted = !_prioMuted; document.getElementById('prio-test-video').muted = _prioMuted; document.getElementById('prio-btn-mute').innerHTML = _prioMuted ? '<i class="fas fa-volume-mute" style="color:#e50914;"></i>' : '<i class="fas fa-volume-mute"></i>'; }
 
 // ── AJOUT MANUEL PRIORITÉ ──
 function prioToggleAddPanel() {
@@ -5741,8 +6356,37 @@ function _prioParseM3uText(text) {
     return result;
 }
 
+// true = chaîne EN DIRECT (à conserver), false = VOD / série (à exclure)
+function _prioIsLiveChannel(item) {
+    const cat  = String(item.category || '').toLowerCase();
+    const name = String(item.name || '').toLowerCase();
+    const url  = String(item.url || '').toLowerCase();
+
+    const vodKeywords = ['vod', 'film', 'films', 'movie', 'movies', 'série', 'series', 'serie', 'saison', 'season',
+                          'épisode', 'episode', 'documentaire', '| vod', 'catch-up', 'catchup', 'kids vod'];
+    for (const kw of vodKeywords) {
+        if (cat.includes(kw) || name.includes(kw)) return false;
+    }
+    if (/\.(mp4|mkv|avi|mov|flv)(\?|$)/i.test(url)) return false;
+    if (/\/(movie|series)\//i.test(url)) return false;
+    return true;
+}
+
+// Filtre une liste parsée pour ne garder que les chaînes direct, et renvoie aussi le nb exclu
+function _prioFilterLiveOnly(parsed) {
+    const kept = [];
+    let excluded = 0;
+    parsed.forEach(item => {
+        if (_prioIsLiveChannel(item)) kept.push(item);
+        else excluded++;
+    });
+    return { kept, excluded };
+}
+
 // Aperçu après parsing : affiche les badges nouvelles/doublons/total
 function _prioM3uShowPreview(parsed, sourceName) {
+    const filterRes = _prioFilterLiveOnly(parsed);
+    parsed = filterRes.kept;
     _prioM3uParsed = parsed;
     const existing  = new Set(prioAllChannels.map(c => c.url));
     const newOnes   = parsed.filter(c => !existing.has(c.url));
@@ -5750,7 +6394,8 @@ function _prioM3uShowPreview(parsed, sourceName) {
     const totalAfter = prioAllChannels.length + newOnes.length;
 
     document.getElementById('prio-m3u-preview').style.display = 'block';
-    document.getElementById('prio-m3u-preview-title').innerText = '📋 ' + sourceName + ' — ' + parsed.length + ' chaîne(s) lues';
+    document.getElementById('prio-m3u-preview-title').innerText = '📋 ' + sourceName + ' — ' + parsed.length + ' chaîne(s) DIRECT lues' +
+        (filterRes.excluded ? ' (' + filterRes.excluded + ' VOD/séries exclues)' : '');
     document.getElementById('prio-m3u-badge-new').innerText  = newOnes.length + ' nouvelles';
     document.getElementById('prio-m3u-badge-dup').innerText  = dups.length + ' doublons ignorés';
     document.getElementById('prio-m3u-badge-tot').innerText  = '→ Total après fusion : ' + totalAfter;
@@ -5781,6 +6426,61 @@ function _prioM3uShowPreview(parsed, sourceName) {
     _prioM3uSetMsg('', '');
 }
 
+// Importer depuis identifiants Xtream (host / user / pass)
+async function prioImportXtream() {
+    const host = (document.getElementById('prio-xt-host').value || '').trim().replace(/\/$/, '');
+    const user = (document.getElementById('prio-xt-user').value || '').trim();
+    const pass = (document.getElementById('prio-xt-pass').value || '').trim();
+    const out  = document.getElementById('prio-xt-msg');
+    if (!host || !user || !pass) { out.style.color = '#ffd700'; out.innerText = '⚠️ Serveur / utilisateur / mot de passe requis'; return; }
+    if (!host.startsWith('http')) { out.style.color = '#ffd700'; out.innerText = '⚠️ Le serveur doit commencer par http:// ou https://'; return; }
+
+    out.style.color = '#0af'; out.innerText = '⏳ Connexion au serveur Xtream...';
+    document.getElementById('prio-m3u-preview').style.display = 'none';
+
+    const url = host + '/get.php?username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass) + '&type=m3u_plus&output=ts';
+    // Plusieurs proxys CORS en cascade — un seul proxy qui répond en 403 ne bloque pas les autres
+    const attempts = [
+        { label: 'direct',   fetchUrl: url, mode: 'text' },
+        { label: 'allorigins', fetchUrl: 'https://api.allorigins.win/get?url=' + encodeURIComponent(url), mode: 'allorigins' },
+        { label: 'corsproxy',  fetchUrl: 'https://corsproxy.io/?url=' + encodeURIComponent(url), mode: 'text' },
+        { label: 'codetabs',   fetchUrl: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), mode: 'text' },
+        { label: 'allorigins-raw', fetchUrl: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url), mode: 'text' }
+    ];
+
+    const failLog = [];
+    for (let i = 0; i < attempts.length; i++) {
+        try {
+            out.style.color = '#0af'; out.innerText = '⏳ Tentative ' + (i+1) + '/' + attempts.length + ' (' + attempts[i].label + ')...';
+            const resp = await fetch(attempts[i].fetchUrl, { signal: AbortSignal.timeout(25000) });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            let text;
+            if (attempts[i].mode === 'allorigins') {
+                const json = await resp.json();
+                text = json.contents || '';
+            } else {
+                text = await resp.text();
+            }
+            if (!text || (!text.includes('#EXTINF') && !text.startsWith('http'))) {
+                throw new Error('réponse invalide (identifiants refusés ?)');
+            }
+            const parsed = _prioParseM3uText(text);
+            if (!parsed.length) throw new Error('aucune chaîne trouvée pour ce compte');
+            _prioM3uShowPreview(parsed, user + '@' + host.replace(/^https?:\/\//, ''));
+            out.style.color = '#2ecc71';
+            out.innerText = '✅ ' + parsed.length.toLocaleString('fr') + ' chaînes collectées depuis ' + host + ' (via ' + attempts[i].label + ')';
+            return;
+        } catch (e) {
+            failLog.push(attempts[i].label + ': ' + e.message);
+            console.warn('[prioImportXtream] tentative "' + attempts[i].label + '" échouée :', e.message);
+        }
+    }
+    out.style.color = '#e50914';
+    out.innerHTML = '❌ Impossible de collecter les chaînes après ' + attempts.length + ' tentatives.<br>' +
+        '<span style="color:#666;">' + failLog.map(_prioEsc).join(' • ') + '</span><br>' +
+        '👉 Testez le lien directement : <a href="' + url.replace(/"/g,'') + '" target="_blank" style="color:#0af;">ouvrir dans un nouvel onglet</a>';
+}
+
 // Importer depuis URL
 async function prioImportM3uUrl() {
     const url = (document.getElementById('prio-m3u-url-input').value || '').trim();
@@ -5801,7 +6501,7 @@ async function prioImportM3uUrl() {
         _prioM3uShowPreview(parsed, url.split('/').pop() || 'playlist.m3u');
         _prioM3uSetMsg('✅ ' + parsed.length + ' chaînes lues depuis l\'URL', '#2ecc71');
     } catch(e) {
-        _prioM3uSetMsg('❌ Erreur : ' + e.message + ' (vérifiez l\'URL ou les CORS)', '#4CAF50');
+        _prioM3uSetMsg('❌ Erreur : ' + e.message + ' (vérifiez l\'URL ou les CORS)', '#e50914');
     }
 }
 
@@ -5821,10 +6521,10 @@ function prioImportM3uFile(input) {
             _prioM3uShowPreview(parsed, file.name);
             _prioM3uSetMsg('✅ ' + parsed.length + ' chaînes lues depuis ' + file.name, '#2ecc71');
         } catch(err) {
-            _prioM3uSetMsg('❌ Erreur lecture : ' + err.message, '#4CAF50');
+            _prioM3uSetMsg('❌ Erreur lecture : ' + err.message, '#e50914');
         }
     };
-    reader.onerror = function() { _prioM3uSetMsg('❌ Impossible de lire le fichier', '#4CAF50'); };
+    reader.onerror = function() { _prioM3uSetMsg('❌ Impossible de lire le fichier', '#e50914'); };
     reader.readAsText(file, 'utf-8');
 }
 
@@ -5836,7 +6536,7 @@ function prioConfirmM3uMerge() {
     if (!newOnes.length) { _prioM3uSetMsg('⚠️ Toutes ces chaînes existent déjà', '#ffd700'); return; }
 
     prioSaveState(); // ✅ undo possible
-    prioAllChannels.push(...newOnes);
+    prioAllChannels = prioAllChannels.concat(newOnes); // ✅ FIX : concat() au lieu de push(...spread) — évite "Maximum call stack size exceeded" sur de très gros tableaux (500k+ chaînes)
     // ✅ FIX : mettre à jour le Map avec les nouvelles chaînes
     newOnes.forEach(function(c){ _prioChannelMap.set(c.url, c); });
 
@@ -5893,6 +6593,239 @@ function prioExportJSON() {
 }
 
 function _prioEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// =====================================================
+// ── FILTRE / NETTOYAGE PAR LIEN (host, mot-clé dans l'URL) ──
+// =====================================================
+let _prioLinkFilter = '';
+
+function prioToggleCleanupPanel() {
+    const body    = document.getElementById('prio-cleanup-panel-body');
+    const chevron = document.getElementById('prio-cleanup-panel-chevron');
+    const open    = body.classList.toggle('open');
+    chevron.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function _prioCleanupSetMsg(msg, color) {
+    const el = document.getElementById('prio-cleanup-msg');
+    if (el) { el.innerText = msg; el.style.color = color || '#eee'; }
+}
+
+// Applique le filtre par lien à la liste de gauche (cumulable avec recherche/catégorie)
+function prioApplyLinkFilter() {
+    _prioLinkFilter = (document.getElementById('prio-link-filter-input').value || '').trim();
+    const countEl = document.getElementById('prio-link-filter-count');
+    if (!_prioLinkFilter) {
+        countEl.innerText = '';
+    } else {
+        const matches = prioAllChannels.filter(function(ch){ return (ch.url||'').toLowerCase().includes(_prioLinkFilter.toLowerCase()); });
+        countEl.innerText = '🔍 ' + matches.length.toLocaleString('fr') + ' chaîne(s) contiennent "' + _prioLinkFilter + '" dans leur lien (toutes listes confondues, prioritaires incluses)';
+    }
+    prioFilterLeft();
+}
+
+function prioClearLinkFilter() {
+    _prioLinkFilter = '';
+    document.getElementById('prio-link-filter-input').value = '';
+    document.getElementById('prio-link-filter-count').innerText = '';
+    _prioCleanupSetMsg('', '');
+    prioFilterLeft();
+}
+
+// Retourne toutes les chaînes (prioritaires + non-prioritaires) dont l'URL contient le filtre
+function _prioGetLinkFilterMatches() {
+    const term = (_prioLinkFilter || '').toLowerCase().trim();
+    if (!term) return [];
+    return prioAllChannels.filter(function(ch){ return (ch.url||'').toLowerCase().includes(term); });
+}
+
+function prioQuarantineByLinkFilter() {
+    const matches = _prioGetLinkFilterMatches();
+    if (!matches.length) { _prioCleanupSetMsg('⚠️ Aucune chaîne ne correspond à ce filtre.', '#ffd700'); return; }
+    if (!confirm('Mettre en quarantaine ' + matches.length + ' chaîne(s) contenant "' + _prioLinkFilter + '" ?\n(Restaurable ensuite depuis la section Quarantaine)')) return;
+    const urlsToQ = new Set(matches.map(function(c){ return c.url; }));
+    matches.forEach(function(ch) { if (!prioQuarantined.some(function(q) { return q.url === ch.url; })) prioQuarantined.push(ch); });
+    prioAllChannels = prioAllChannels.filter(function(ch) { return !urlsToQ.has(ch.url); });
+    prioURLs = prioURLs.filter(function(u) { return !urlsToQ.has(u); });
+    _prioBuildMap();
+    prioMarkDirty(); prioFilterLeft(); prioRenderRight(); prioUpdateStats(); prioRenderQuarantine();
+    document.getElementById('prio-st-total').innerText = prioAllChannels.length.toLocaleString('fr');
+    document.getElementById('prio-link-filter-count').innerText = '';
+    _prioCleanupSetMsg('✅ ' + matches.length + ' chaîne(s) mises en quarantaine.', '#ff7800');
+    toast('🚫 ' + matches.length + ' chaîne(s) mises en quarantaine', '#ff7800');
+}
+
+function prioDeleteByLinkFilter() {
+    const matches = _prioGetLinkFilterMatches();
+    if (!matches.length) { _prioCleanupSetMsg('⚠️ Aucune chaîne ne correspond à ce filtre.', '#ffd700'); return; }
+    if (!confirm('⚠️ SUPPRESSION DÉFINITIVE de ' + matches.length + ' chaîne(s) contenant "' + _prioLinkFilter + '" dans leur lien.\n\nCette action est IRRÉVERSIBLE. Continuer ?')) return;
+    const urlsToDelete = new Set(matches.map(function(c){ return c.url; }));
+    prioSaveState();
+    prioAllChannels = prioAllChannels.filter(function(ch) { return !urlsToDelete.has(ch.url); });
+    prioURLs = prioURLs.filter(function(u) { return !urlsToDelete.has(u); });
+    _prioBuildMap();
+    prioMarkDirty(); prioFilterLeft(); prioRenderRight(); prioUpdateStats();
+    document.getElementById('prio-st-total').innerText = prioAllChannels.length.toLocaleString('fr');
+    document.getElementById('prio-link-filter-count').innerText = '';
+    _prioCleanupSetMsg('🗑 ' + matches.length + ' chaîne(s) supprimées définitivement.', '#ff6b6b');
+    toast('🗑 ' + matches.length + ' chaîne(s) supprimées définitivement', '#ff6b6b');
+}
+
+// =====================================================
+// ── EXPORT M3U ──
+// =====================================================
+function _prioBuildM3uText(channels) {
+    let out = '#EXTM3U\n';
+    channels.forEach(function(ch) {
+        out += '#EXTINF:-1 tvg-logo="' + (ch.logo || '') + '" group-title="' + (ch.category || 'Autres') + '",' + (ch.name || 'Chaîne') + '\n';
+        out += (ch.url || '') + '\n';
+    });
+    return out;
+}
+
+function prioExportM3U() {
+    if (!prioAllChannels.length) { toast('⚠️ Aucune chaîne à exporter', '#ffd700'); return; }
+    const prioSet    = new Set(prioURLs);
+    const prioChains = prioURLs.map(url => prioAllChannels.find(c => c.url === url)).filter(Boolean);
+    const restChains = prioAllChannels.filter(c => !prioSet.has(c.url));
+    const ordered    = [...prioChains, ...restChains];
+    const m3uText = _prioBuildM3uText(ordered);
+    const blob = new Blob([m3uText], { type: 'application/x-mpegurl' });
+    const now = new Date();
+    const version = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'channels_v' + version + '.m3u'; a.click(); URL.revokeObjectURL(a.href);
+    document.getElementById('prio-export-info').innerText = '✅ ' + ordered.length.toLocaleString('fr') + ' chaînes exportées (M3U)';
+    setTimeout(() => document.getElementById('prio-export-info').innerText = '', 3000);
+    toast('✅ channels_v' + version + '.m3u téléchargé', '#2ecc71');
+}
+
+// =====================================================
+// ── EXPORT ZIP (JSON + M3U dans une seule archive) ──
+// =====================================================
+async function prioExportZIP() {
+    if (!prioAllChannels.length) { toast('⚠️ Aucune chaîne à exporter', '#ffd700'); return; }
+    if (typeof JSZip === 'undefined') { toast('❌ JSZip non chargé — vérifiez votre connexion réseau', '#ff6b6b'); return; }
+    const prioSet    = new Set(prioURLs);
+    const prioChains = prioURLs.map(url => prioAllChannels.find(c => c.url === url)).filter(Boolean);
+    const restChains = prioAllChannels.filter(c => !prioSet.has(c.url));
+    const ordered    = [...prioChains, ...restChains];
+    const now = new Date();
+    const version = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
+
+    const zip = new JSZip();
+    const payload = { version, count: ordered.length, saved_at: now.toISOString(), channels: ordered };
+    zip.file('channels_v' + version + '.json', JSON.stringify(payload, null, 2));
+    zip.file('channels_v' + version + '.m3u', _prioBuildM3uText(ordered));
+
+    // Un fichier M3U séparé par catégorie, en bonus
+    const byCat = {};
+    ordered.forEach(function(ch) {
+        const cat = (ch.category || 'Autres').replace(/[\\/:*?"<>|]/g, '_');
+        if (!byCat[cat]) byCat[cat] = [];
+        byCat[cat].push(ch);
+    });
+    const catFolder = zip.folder('par_categorie');
+    Object.keys(byCat).forEach(function(cat) {
+        catFolder.file(cat + '.m3u', _prioBuildM3uText(byCat[cat]));
+    });
+
+    toast('⏳ Génération du ZIP...', '#0af');
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'channels_v' + version + '.zip'; a.click(); URL.revokeObjectURL(a.href);
+    document.getElementById('prio-export-info').innerText = '✅ ' + ordered.length.toLocaleString('fr') + ' chaînes exportées (ZIP)';
+    setTimeout(() => document.getElementById('prio-export-info').innerText = '', 3000);
+    toast('✅ channels_v' + version + '.zip téléchargé', '#2ecc71');
+}
+
+// =====================================================
+// ── IMPORT JSON ──
+// =====================================================
+// Accepte soit { channels: [...] }, soit un tableau [...] directement
+function _prioParseJsonChannels(raw) {
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { throw new Error('JSON invalide : ' + e.message); }
+    const arr = Array.isArray(data) ? data : (Array.isArray(data.channels) ? data.channels : null);
+    if (!arr) throw new Error('Format JSON non reconnu (attendu: un tableau ou { channels: [...] })');
+    return arr.map(function(c) {
+        return {
+            name:     c.name || c.title || 'Chaîne inconnue',
+            url:      c.url  || c.stream_url || c.lien || '',
+            logo:     c.logo || c.stream_icon || c.tvg_logo || '',
+            category: c.category || c.group || c.genre || 'Autres'
+        };
+    }).filter(function(c){ return c.url; });
+}
+
+function prioImportJsonFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const nameLabelIds = ['prio-json-file-name'];
+    nameLabelIds.forEach(function(id){ const el = document.getElementById(id); if (el) el.innerText = file.name + ' (' + (file.size/1024).toFixed(1) + ' Ko)'; });
+    document.getElementById('prio-m3u-preview').style.display = 'none';
+    _prioM3uSetMsg('⏳ Lecture du fichier JSON...', '#0af');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = _prioParseJsonChannels(e.target.result);
+            if (!parsed.length) { _prioM3uSetMsg('⚠️ Aucune chaîne trouvée dans ce JSON.', '#ffd700'); return; }
+            _prioM3uShowPreview(parsed, file.name);
+            _prioM3uSetMsg('✅ ' + parsed.length + ' chaînes lues depuis ' + file.name, '#2ecc71');
+        } catch(err) {
+            _prioM3uSetMsg('❌ Erreur lecture JSON : ' + err.message, '#e50914');
+        }
+    };
+    reader.onerror = function() { _prioM3uSetMsg('❌ Impossible de lire le fichier', '#e50914'); };
+    reader.readAsText(file, 'utf-8');
+    input.value = '';
+}
+
+// =====================================================
+// ── IMPORT ZIP (plusieurs fichiers .m3u/.m3u8/.txt/.json à la fois) ──
+// =====================================================
+async function prioImportZipFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (typeof JSZip === 'undefined') { _prioM3uSetMsg('❌ JSZip non chargé — vérifiez votre connexion réseau', '#e50914'); return; }
+    const nameLabelIds = ['prio-zip-file-name'];
+    nameLabelIds.forEach(function(id){ const el = document.getElementById(id); if (el) el.innerText = file.name + ' (' + (file.size/1024).toFixed(1) + ' Ko)'; });
+    document.getElementById('prio-m3u-preview').style.display = 'none';
+    _prioM3uSetMsg('⏳ Lecture de l\'archive ZIP...', '#0af');
+    try {
+        const zip = await JSZip.loadAsync(file);
+        let allParsed = [];
+        let filesRead = 0;
+        const entries = Object.values(zip.files).filter(function(f){ return !f.dir; });
+        for (const entry of entries) {
+            const lower = entry.name.toLowerCase();
+            if (lower.endsWith('.m3u') || lower.endsWith('.m3u8') || lower.endsWith('.txt')) {
+                const text = await entry.async('string');
+                allParsed = allParsed.concat(_prioParseM3uText(text));
+                filesRead++;
+            } else if (lower.endsWith('.json')) {
+                const text = await entry.async('string');
+                try { allParsed = allParsed.concat(_prioParseJsonChannels(text)); filesRead++; } catch(e) { /* fichier json ignoré si invalide */ }
+            }
+            // .ts = généralement une liste de liens (texte), parfois un seul lien — on tente le parsing M3U/texte
+            else if (lower.endsWith('.ts')) {
+                const text = (await entry.async('string')).trim();
+                const asList = _prioParseM3uText(text);
+                if (asList.length) {
+                    allParsed = allParsed.concat(asList);
+                } else if (text.startsWith('http')) {
+                    allParsed.push({ name: entry.name.replace(/\.ts$/i,''), url: text.split('\n')[0].trim(), logo: '', category: 'Autres' });
+                }
+                filesRead++;
+            }
+        }
+        if (!filesRead) { _prioM3uSetMsg('⚠️ Aucun fichier .m3u/.m3u8/.txt/.json/.ts trouvé dans ce ZIP.', '#ffd700'); return; }
+        if (!allParsed.length) { _prioM3uSetMsg('⚠️ Aucune chaîne valide trouvée dans les ' + filesRead + ' fichier(s) du ZIP.', '#ffd700'); return; }
+        _prioM3uShowPreview(allParsed, file.name + ' (' + filesRead + ' fichiers)');
+        _prioM3uSetMsg('✅ ' + allParsed.length + ' chaînes lues depuis ' + filesRead + ' fichier(s) du ZIP', '#2ecc71');
+    } catch(err) {
+        _prioM3uSetMsg('❌ Erreur lecture ZIP : ' + err.message, '#e50914');
+    }
+    input.value = '';
+}
 
 // =====================================================
 // PARRAINAGE ADMIN
@@ -6033,7 +6966,7 @@ async function approveRetrait(id, paraineurId, montant, reseau, numero) {
             var kkRes = await fetch('https://api.kkiapay.me/api/v1/transfers', {
                 method: 'POST',
                 headers: { 'x-private-key': _kkiapayKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: montant, phone: numero, data: { reason: 'Commission parrainage PRIME TV' } })
+                body: JSON.stringify({ amount: montant, phone: numero, data: { reason: 'Commission parrainage MY BOX TV' } })
             });
             var kkData = await kkRes.json();
             if (!kkRes.ok) throw new Error(kkData.message || ('KKiaPay HTTP ' + kkRes.status));
@@ -6094,7 +7027,7 @@ async function deleteParaineur(id, email) {
 async function saveKkiapayKey() {
     var key = document.getElementById('kk-private-key').value.trim();
     var msg = document.getElementById('kk-key-msg');
-    if (!key) { msg.style.color='#4CAF50'; msg.innerText='⚠️ Entrez une clé valide'; return; }
+    if (!key) { msg.style.color='#e50914'; msg.innerText='⚠️ Entrez une clé valide'; return; }
     try {
         await sbPatch('config', 'id=eq.1', { kkiapay_key: key });
         _kkiapayKey = key;
@@ -6102,19 +7035,19 @@ async function saveKkiapayKey() {
         document.getElementById('kk-private-key').placeholder = '●●●●●●●●●●●●●● (enregistrée)';
         msg.style.color='#2ecc71'; msg.innerText='✅ Clé KKiaPay sauvegardée';
         setTimeout(function(){ msg.innerText=''; }, 3000);
-    } catch(e) { msg.style.color='#4CAF50'; msg.innerText='❌ ' + e.message; }
+    } catch(e) { msg.style.color='#e50914'; msg.innerText='❌ ' + e.message; }
 }
 
 async function saveCommRate() {
     var rate = parseInt(document.getElementById('kk-comm-rate').value);
     var msg  = document.getElementById('kk-rate-msg');
-    if (!rate || rate < 1 || rate > 100) { msg.style.color='#4CAF50'; msg.innerText='⚠️ Taux invalide (1–100)'; return; }
+    if (!rate || rate < 1 || rate > 100) { msg.style.color='#e50914'; msg.innerText='⚠️ Taux invalide (1–100)'; return; }
     try {
         await sbPatch('config', 'id=eq.1', { commission_rate: rate });
         _commRate = rate;
         msg.style.color='#2ecc71'; msg.innerText='✅ Taux ' + rate + '% sauvegardé';
         setTimeout(function(){ msg.innerText=''; }, 3000);
-    } catch(e) { msg.style.color='#4CAF50'; msg.innerText='❌ ' + e.message; }
+    } catch(e) { msg.style.color='#e50914'; msg.innerText='❌ ' + e.message; }
 }
 
 function copyParrSQL() {
@@ -6176,7 +7109,7 @@ async function confirmClearCaches() {
         closeCacheModal();
         toast('🗑 Caches invalidés — tous les clients rechargeront au prochain démarrage !', '#2ecc71');
     } catch(e) {
-        toast('❌ Erreur : ' + e.message, '#4CAF50');
+        toast('❌ Erreur : ' + e.message, '#e50914');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-trash-alt"></i> CONFIRMER — VIDER MAINTENANT';
@@ -6371,7 +7304,7 @@ async function saveReseller() {
     var adminEmail  = (document.getElementById('rs-admin-email').value || '').trim().toLowerCase();
     var adminPass   = (document.getElementById('rs-admin-pass').value || 'ADMIN1234').trim();
 
-    if (!rsId || !name)   { toast('⚠️ ID et Nom obligatoires', '#4CAF50'); return; }
+    if (!rsId || !name)   { toast('⚠️ ID et Nom obligatoires', '#e50914'); return; }
     if (!adminEmail)      { toast('⚠️ Email admin obligatoire pour la connexion du revendeur', '#ffd700'); return; }
     if (!adminEmail.includes('@')) { toast('⚠️ Format email invalide', '#ffd700'); return; }
 
@@ -6444,7 +7377,7 @@ function onTemplateLoaded(event) {
             '<i class="fas fa-check-circle" style="color:#2ecc71;"></i> Template prêt : <strong style="color:#2ecc71;">' + file.name + '</strong> (' + size + ' Ko) — cliquez 📥 sur un revendeur pour générer';
         toast('✅ Template chargé (' + size + ' Ko) — génération activée !', '#2ecc71');
     };
-    reader.onerror = function() { toast('❌ Impossible de lire le fichier', '#4CAF50'); };
+    reader.onerror = function() { toast('❌ Impossible de lire le fichier', '#e50914'); };
     reader.readAsText(file, 'utf-8');
     // Reset input pour permettre rechargement du même fichier
     event.target.value = '';
@@ -6775,6 +7708,76 @@ function copyOpenRouterSQL() {
         var ta = document.createElement('textarea'); ta.value = sql; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
         toast('📋 SQL copié !', '#2ecc71');
     });
+}
+
+// =====================================================
+// XSTREAM — génération d'identifiants Xtream Codes
+// =====================================================
+// URL PUBLIQUE de ton service index.js (le proxy). À adapter une fois déployé.
+const XTREAM_SERVER_URL = "https://myptvi.onrender.com";
+
+function _xsRandomToken(len) {
+    const c = "abcdefghijkmnpqrstuvwxyz23456789";
+    let r = "";
+    for (let i = 0; i < len; i++) r += c.charAt(Math.floor(Math.random() * c.length));
+    return r;
+}
+
+async function xsGenerate() {
+    const cle = document.getElementById('xs-cle').value.trim().toUpperCase();
+    if (!cle) { toast('⚠️ Indiquez la clé de l\'abonné', '#ffd700'); return; }
+    try {
+        const rows = await sbGet('utilisateurs', 'cle=eq.' + encodeURIComponent(cle) + '&select=*');
+        if (!rows.length) { toast('❌ Abonné introuvable', '#ff6b6b'); return; }
+
+        const xUser = 'u' + _xsRandomToken(6);
+        const xPass = _xsRandomToken(10);
+
+        await sbPatch('utilisateurs', 'cle=eq.' + encodeURIComponent(cle), {
+            xtream_user: xUser, xtream_pass: xPass
+        });
+
+        document.getElementById('xs-server').innerText = XTREAM_SERVER_URL;
+        document.getElementById('xs-user').innerText   = xUser;
+        document.getElementById('xs-pass').innerText   = xPass;
+        document.getElementById('xs-result').style.display = 'block';
+        toast('✅ Identifiants Xtream générés pour ' + cle, '#2ecc71');
+        xsLoadList();
+    } catch (e) {
+        toast('❌ ' + e.message + ' (as-tu exécuté le SQL xtream_user/xtream_pass dans Supabase ?)', '#ff6b6b');
+    }
+}
+
+function xsCopy() {
+    const txt = 'Serveur: ' + XTREAM_SERVER_URL
+        + '\nUtilisateur: ' + document.getElementById('xs-user').innerText
+        + '\nMot de passe: ' + document.getElementById('xs-pass').innerText;
+    navigator.clipboard.writeText(txt);
+    toast('📋 Copié', '#2ecc71');
+}
+
+async function xsLoadList() {
+    const el = document.getElementById('xs-list');
+    try {
+        const rows = await sbGet('utilisateurs', 'xtream_user=not.is.null&select=cle,xtream_user,xtream_pass,bloque,duree,date_activation&order=cle');
+        if (!rows.length) { el.innerHTML = '<span style="color:#777;">Aucun accès Xtream généré pour l\'instant.</span>'; return; }
+        el.innerHTML = rows.map(r => `
+            <div style="padding:8px 0;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center;">
+                <span>${r.cle} — <code>${r.xtream_user}</code> / <code>${r.xtream_pass}</code> ${r.bloque ? '<span style="color:#ff6b6b;">(bloqué)</span>' : ''}</span>
+                <button onclick="xsRevoke('${r.cle}')" style="font-size:11px;"><i class="fas fa-ban"></i> Révoquer</button>
+            </div>`).join('');
+    } catch (e) {
+        el.innerHTML = '<div style="color:#ff8c00;font-size:12px;line-height:1.6;"><i class="fas fa-triangle-exclamation"></i> Colonnes xtream_user/xtream_pass introuvables. Copiez le SQL ci-dessus dans Supabase (SQL Editor) puis rechargez cet onglet.</div>';
+    }
+}
+
+async function xsRevoke(cle) {
+    if (!confirm('Révoquer l\'accès Xtream de "' + cle + '" ?')) return;
+    try {
+        await sbPatch('utilisateurs', 'cle=eq.' + encodeURIComponent(cle), { xtream_user: null, xtream_pass: null });
+        toast('🗑 Accès révoqué', '#ff6b6b');
+        xsLoadList();
+    } catch (e) { toast('❌ ' + e.message, '#ff6b6b'); }
 }
 
 </script>
