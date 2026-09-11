@@ -718,7 +718,7 @@ function showToast(msg) {
 // Android → APK · PC (Windows/Mac/Linux) → EXE
 // =============================================
 const AUTO_DL_APK_URL = 'https://github.com/paulwayne343-cyber/primetv/releases/download/1/Prime_TV_BOX.apk';
-const AUTO_DL_EXE_URL = 'https://github.com/rcharda/myboxtv/releases/download/v1.0/My.Box.Smart.Setup.1.0.0.exe';
+const AUTO_DL_EXE_URL = 'https://github.com/paulwayne343-cyber/primetv/releases/download/1/Prime.TV.Setup.1.0.0.exe';
 const AUTO_DL_STORAGE_KEY = 'mbs_auto_dl_done';
 
 function _mbsTriggerDownload(url, filename) {
@@ -749,7 +749,7 @@ function autoDownloadForDevice() {
       showToast('📥 Téléchargement de l\'APK Android lancé...');
       sessionStorage.setItem(AUTO_DL_STORAGE_KEY, '1');
     } else if (isWindows && isDesktop) {
-      _mbsTriggerDownload(AUTO_DL_EXE_URL, 'My.Box.Smart.Setup.1.0.0.exe');
+      _mbsTriggerDownload(AUTO_DL_EXE_URL, 'Prime.TV.Setup.1.0.0.exe');
       showToast('📥 Téléchargement pour Windows lancé...');
       sessionStorage.setItem(AUTO_DL_STORAGE_KEY, '1');
     }
